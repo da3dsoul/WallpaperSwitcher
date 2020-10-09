@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WallpaperSwitcher</string>
+    <string name="up_one_level">...</string>
+    <string name="selectcurdir">Select</string>
+    <string name="have_a_try">Swipe Left or Right</string>
+    <string name="please_select">Select Directory</string>
+</resources>
