@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="ffts.android.WallpaperSwitcher"
+    package="com.da3dsoul.WallpaperSwitcher"
     android:versionCode="0"
     android:versionName="v0.2.0">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -16,18 +15,30 @@
         android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
         tools:targetApi="Q">
-
-        <activity android:name=".WallpaperSwitcherSettings" android:exported="true" />
+        <activity
+            android:name=".SettingsActivity"
+            android:label="@string/title_activity_settings" android:exported="true"
+            android:theme="@style/Theme.AppCompat.DayNight" />
         <activity android:name=".SelectDir" />
-        <activity android:name=".ShareWallpaperActivity" android:exported="true"
+        <activity
+            android:name=".ShareWallpaperActivity"
+            android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity android:name=".SwitchWallpaperActivity" android:exported="true"
+        <activity
+            android:name=".SwitchWallpaperActivity"
+            android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity android:name=".OpenCurrentWallpaper" android:exported="true"
+        <activity
+            android:name=".OpenCurrentWallpaper"
+            android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity android:name=".OpenPreviousWallpaper" android:exported="true"
+        <activity
+            android:name=".OpenPreviousWallpaper"
+            android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity android:name=".OpenCurrentWallpaperOnPixiv" android:exported="true"
+        <activity
+            android:name=".OpenCurrentWallpaperOnPixiv"
+            android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <service
@@ -45,7 +56,7 @@
 
         <receiver android:name=".ScreenEventReceiver">
             <intent-filter>
-                <action android:name="android.intent.action.SCREEN_ON"/>
+                <action android:name="android.intent.action.SCREEN_ON" />
             </intent-filter>
         </receiver>
 

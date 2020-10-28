@@ -1,4 +1,4 @@
-package ffts.android.WallpaperSwitcher;
+package com.da3dsoul.WallpaperSwitcher;
 
 import android.os.Environment;
 import android.util.Log;

@@ -5,4 +5,5 @@
     <string name="selectcurdir">Select</string>
     <string name="have_a_try">Swipe Left or Right</string>
     <string name="please_select">Select Directory</string>
+    <string name="debug_stats">Debug Stats</string>
 </resources>
