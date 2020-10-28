@@ -6,4 +6,6 @@
     <string name="have_a_try">Swipe Left or Right</string>
     <string name="please_select">Select Directory</string>
     <string name="debug_stats">Debug Stats</string>
+    <string name="none">"  "</string>
+    <string name="title_activity_settings">Settings</string>
 </resources>

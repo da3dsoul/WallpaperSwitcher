@@ -5,4 +5,7 @@
     <string name="have_a_try">用手指左右滑动试试</string>
     <string name="please_select">点击选择壁纸所在的路径</string>
     <string name="up_one_level">...</string>
+    <string name="none">"  "</string>
+    <string name="title_activity_settings">設定</string>
+    <string name="debug_stats">デバッグ統計</string>
 </resources>
