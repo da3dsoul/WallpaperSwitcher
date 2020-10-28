@@ -11,14 +11,9 @@ public class SwitchWallpaperActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (WallpaperSwitcher.Instances.isEmpty()) {
-            finish();
-            return;
-        }
-        for (Map.Entry<UUID, WallpaperSwitcher.WallpaperEngine> entry : WallpaperSwitcher.Instances.entrySet())
+        if (CacheManager.instance().isInitialized())
         {
-            entry.getValue().switchWallpaper();
-            break;
+            CacheManager.instance().switchWallpaper(getApplicationContext());
         }
         finish();
     }

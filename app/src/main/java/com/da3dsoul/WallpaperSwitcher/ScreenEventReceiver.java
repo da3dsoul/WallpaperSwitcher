@@ -4,9 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-import java.util.Map;
-import java.util.UUID;
-
 public class ScreenEventReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent)
@@ -14,12 +11,8 @@ public class ScreenEventReceiver extends BroadcastReceiver {
         if (intent.getAction() == null) return;
         if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
             //The screen on position
-            if (WallpaperSwitcher.Instances.isEmpty()) return;
-            for (Map.Entry<UUID, WallpaperSwitcher.WallpaperEngine> entry : WallpaperSwitcher.Instances.entrySet())
-            {
-                entry.getValue().switchWallpaper();
-                break;
-            }
+            if (!CacheManager.instance().isInitialized()) return;
+            CacheManager.instance().switchWallpaper(context);
         }
     }
 }
