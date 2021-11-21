@@ -8,4 +8,6 @@
     <string name="none">"  "</string>
     <string name="title_activity_settings">設定</string>
     <string name="debug_stats">デバッグ統計</string>
+    <string name="txtBucketSize">Bucket Size</string>
+    <string name="txtReadAhead">Read Ahead</string>
 </resources>

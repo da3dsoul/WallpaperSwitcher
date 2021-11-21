@@ -82,6 +82,7 @@ public class SelectDir extends Activity {
 
 
     private void fill(File[] files) {
+        int prevCount = this.directoryEntries.size();
         this.directoryEntries.clear();
 
         for (File currentFile : files) {
@@ -94,11 +95,13 @@ public class SelectDir extends Activity {
             }
         }
         this.directoryEntries.sort((a, b) -> a.getDir().compareToIgnoreCase(b.getDir()));
-        if (this.currentDirectory.getParent() != null) {
-            this.directoryEntries.add(0, new InputFileListItem(getString(R.string.up_one_level), getString(R.string.none), R.drawable.uponelevel, true));
+        File parent = this.currentDirectory.getParentFile();
+        if (parent != null) {
+            this.directoryEntries.add(0, new InputFileListItem(getString(R.string.up_one_level), parent.getAbsolutePath(), R.drawable.uponelevel, true));
         }
 
-        listAdapter.notifyDataSetChanged();
+        listAdapter.notifyItemRangeRemoved(0, prevCount);
+        listAdapter.notifyItemRangeInserted(0, this.directoryEntries.size());
     }
 
     private boolean checkEndsWithInStringArray(String checkItsEnd, String[] fileEndings) {

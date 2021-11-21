@@ -2,14 +2,16 @@ package com.da3dsoul.WallpaperSwitcher;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
 import androidx.core.content.FileProvider;
 
 import java.io.File;
-import java.util.Map;
-import java.util.UUID;
+import java.util.List;
 
 public class ShareWallpaperActivity extends Activity {
 
@@ -28,7 +30,14 @@ public class ShareWallpaperActivity extends Activity {
             Intent sharingIntent = new Intent(Intent.ACTION_SEND);
             sharingIntent.setType("image/*");
 
-            sharingIntent.putExtra(Intent.EXTRA_STREAM, FileProvider.getUriForFile(getApplicationContext(), "com.da3dsoul.WallpaperSwitcher.fileprovider", file));
+            Uri uri = FileProvider.getUriForFile(getApplicationContext(), "com.da3dsoul.WallpaperSwitcher.fileprovider", file);
+            sharingIntent.putExtra(Intent.EXTRA_STREAM, uri);
+            sharingIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            List<ResolveInfo> resInfoList = getPackageManager().queryIntentActivities(sharingIntent, PackageManager.MATCH_DEFAULT_ONLY);
+            for (ResolveInfo resolveInfo : resInfoList) {
+                String packageName = resolveInfo.activityInfo.packageName;
+                grantUriPermission(packageName, uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
             Intent chooser = Intent.createChooser(sharingIntent, "Share " + path.substring(path.lastIndexOf('/') + 1));
             chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(chooser);

@@ -11,7 +11,6 @@ import android.graphics.Paint;
 import android.service.wallpaper.WallpaperService;
 import android.view.SurfaceHolder;
 
-import java.io.File;
 
 public class WallpaperSwitcher extends WallpaperService {
 
@@ -71,8 +70,9 @@ public class WallpaperSwitcher extends WallpaperService {
 
         private void drawFrame(Canvas c) {
             Bitmap paper = null;
+            if (!CacheManager.instance().isInitialized()) return;
             String path = CacheManager.instance().path;
-            if (path != null) paper = BitmapFactory.decodeFile(path);
+            if (path != null && !path.equals("")) paper = BitmapFactory.decodeFile(path);
             if (paper == null) {
                 BitmapFactory.Options opts = new BitmapFactory.Options();
                 opts.inSampleSize = 1;
@@ -96,11 +96,12 @@ public class WallpaperSwitcher extends WallpaperService {
                 c.drawText("Path: " + path, 10, y, white);
                 y += fontSize + 8;
                 c.drawText("CurrentIndex: " + CacheManager.instance().currentIndex +
-                        "   Cache Size: " + CacheManager.instance().cacheSize + "   bucketSize: " +
-                        CacheManager.instance().bucketSize, 10, y, white);
+                        "   Cache Size: " + CacheManager.instance().cacheSize, 10, y, white);
                 y += fontSize + 8;
-                c.drawText("BucketSeed: " + sp.getLong("seed", 0), 10, y, white);
-
+                c.drawText("bucketSize: " + CacheManager.instance().bucketSize + "   baseBucketSize: "
+                        + CacheManager.baseBucketSize, 10, y, white);
+                y += fontSize + 8;
+                c.drawText("ReadAhead: " + CacheManager.cacheReadAhead + "   BucketSeed: " + sp.getLong("seed", 0), 10, y, white);
             }
         }
 
@@ -119,22 +120,13 @@ public class WallpaperSwitcher extends WallpaperService {
 
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if (key == null || key.equals("dir")) {
-                String directories = sharedPreferences.getString("dir", "");
-                if (directories == null) {
-                    drawFrame();
-                    return;
-                }
-                CacheManager.instance().papers.clear();
-                String[] parsedDirectories = directories.split("\\|");
-                for (String dir : parsedDirectories) {
-                    File file = new File(dir);
-                    if (!file.exists() || !file.isDirectory()) continue;
-                    CacheManager.instance().papers.add(file);
-                }
-
-                CacheManager.instance().populateCache();
+                CacheManager.instance().ParseSourceDirectories(sharedPreferences);
+                if (CacheManager.instance().sourceDirectories.size() > 0)
+                    CacheManager.instance().queueCacheRebuild(getApplicationContext());
                 drawFrame();
             } else if (key.equals("debug_stats") || sharedPreferences.getBoolean("debug_stats", false))
+                drawFrame();
+            else if (key.equals("cache"))
                 drawFrame();
         }
 

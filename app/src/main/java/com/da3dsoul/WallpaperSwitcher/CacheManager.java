@@ -1,15 +1,24 @@
 package com.da3dsoul.WallpaperSwitcher;
 
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
+import androidx.concurrent.futures.CallbackToFutureAdapter;
+import androidx.work.BackoffPolicy;
 import androidx.work.ExistingWorkPolicy;
+import androidx.work.ForegroundInfo;
 import androidx.work.ListenableWorker;
 import androidx.work.OneTimeWorkRequest;
+import androidx.work.OutOfQuotaPolicy;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
+
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -20,10 +29,22 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public class CacheManager {
     // region variables and init
+    public static int baseBucketSize = 100;
+    public static int cacheReadAhead = 50;
     private static CacheManager _instance = null;
+    private final HashSet<INotifyWallpaperChanged> listeners = new HashSet<>();
+    public String path;
+    public int currentIndex = 0;
+    public ArrayList<File> sourceDirectories = new ArrayList<>();
+    public int bucketSize = baseBucketSize;
+    public final ArrayList<File> cache = new ArrayList<>(bucketSize);
+    public int cacheSize;
+    private boolean isInitialized;
+    private SharedPreferences sp;
 
     public static CacheManager instance()
     {
@@ -31,37 +52,22 @@ public class CacheManager {
         return _instance;
     }
 
-    private final HashSet<INotifyWallpaperChanged> listeners = new HashSet<>();
-
-    private boolean isInitialized;
-    public String path;
-    public int currentIndex = 0;
-    public ArrayList<File> papers = new ArrayList<>();
-    public int bucketSize = 100;
-    public final ArrayList<File> cache = new ArrayList<>(bucketSize);
-    public int cacheSize;
-    private SharedPreferences sp;
-
     public boolean isInitialized() {
         return isInitialized;
     }
 
     public void init(Context c) {
         if (isInitialized) return;
+        NotificationChannel channel = new NotificationChannel("WallpaperSwitcher", "WallpaperSwitcher", NotificationManager.IMPORTANCE_DEFAULT);
+        channel.setDescription("WallpaperSwitcher");
+        // Register the channel with the system; you can't change the importance
+        // or other notification behaviors after this
+        NotificationManager notificationManager = c.getSystemService(NotificationManager.class);
+        notificationManager.createNotificationChannel(channel);
         // load from persist/settings
         sp = c.getSharedPreferences("wall", Context.MODE_PRIVATE);
 
-        String directories = sp.getString("dir", "");
-        if (directories == null) {
-            return;
-        }
-        String[] parsedDirectories = directories.split("\\|");
-        for (String dir : parsedDirectories) {
-            if (papers == null) papers = new ArrayList<>();
-            File file = new File(dir);
-            if (!file.exists() || !file.isDirectory()) continue;
-            papers.add(file);
-        }
+        if (ParseSourceDirectories(sp)) return;
 
         synchronized (cache) {
             String data = sp.getString("cache", "");
@@ -76,7 +82,10 @@ public class CacheManager {
             }
 
             cacheSize = cache.size();
-            currentIndex = sp.getInt("currentIndex", 0);
+            currentIndex = Math.max(sp.getInt("currentIndex", 0), 0);
+            baseBucketSize = Math.max(sp.getInt("bucketSize", baseBucketSize), 0);
+            bucketSize = baseBucketSize;
+            cacheReadAhead = Math.max(sp.getInt("readAhead", cacheReadAhead), 0);
 
             if (cacheSize == 0) populateCache();
             else queueCachePopulation(c);
@@ -86,6 +95,24 @@ public class CacheManager {
             }
         }
         isInitialized = true;
+    }
+
+    public boolean ParseSourceDirectories(SharedPreferences sharedPreferences) {
+        if (sourceDirectories == null) sourceDirectories = new ArrayList<>();
+        else sourceDirectories.clear();
+
+        String directories = sharedPreferences.getString("dir", "");
+        if (directories == null) {
+            return true;
+        }
+
+        String[] parsedDirectories = directories.split("\\|");
+        for (String dir : parsedDirectories) {
+            File file = new File(dir);
+            if (!file.exists() || !file.isDirectory()) continue;
+            sourceDirectories.add(file);
+        }
+        return false;
     }
     // endregion
 
@@ -116,17 +143,18 @@ public class CacheManager {
 
     // region Cache Management
     public void populateCache() {
-        synchronized (cache) {
-            if (!cache.isEmpty() && currentIndex < bucketSize - 10) return;
-        }
+        List<File> temp = new ArrayList<>(cache);
+        if (cacheSize > bucketSize) return;
+        if (cacheSize == bucketSize && currentIndex < cacheSize - cacheReadAhead) return;
 
         ArrayList<File> files = new ArrayList<>();
-        for (File dir : papers) {
+        for (File dir : sourceDirectories) {
             recursivelyAddWallpapers(files, dir);
         }
         if (files.size() < bucketSize) bucketSize = files.size();
+        else if (bucketSize < baseBucketSize && files.size() >= bucketSize) bucketSize = baseBucketSize;
 
-        files.removeAll(cache);
+        files.removeAll(temp);
 
         if (files.size() <= 0) {
             path = null;
@@ -147,7 +175,11 @@ public class CacheManager {
             SharedPreferences.Editor edit = sp.edit();
             edit.putLong("seed", getSeed(rand));
             if (cacheSize > 0) {
-                path = cache.get(currentIndex).getAbsolutePath();
+                if (currentIndex < cacheSize)
+                    path = cache.get(currentIndex).getAbsolutePath();
+                else
+                    path = cache.get(0).getAbsolutePath();
+
                 String[] paths = new String[cacheSize];
                 for (int i = 0; i < cacheSize; i++) {
                     paths[i] = cache.get(i).getAbsolutePath();
@@ -163,11 +195,20 @@ public class CacheManager {
     private void cleanCache() {
         synchronized (cache) {
             if (cacheSize <= bucketSize || currentIndex < bucketSize) return;
-            cache.subList(0, Math.min(cacheSize, bucketSize)).clear();
-            cacheSize = cache.size();
-            cache.subList(bucketSize, cacheSize).clear();
-            cacheSize = cache.size();
+            int originalSize = cache.size();
             currentIndex -= bucketSize;
+            cache.subList(0, originalSize - bucketSize).clear();
+            cacheSize = cache.size();
+
+
+            SharedPreferences.Editor edit = sp.edit();
+            String[] paths = new String[cacheSize];
+            for (int i = 0; i < cacheSize; i++) {
+                paths[i] = cache.get(i).getAbsolutePath();
+            }
+            edit.putString("cache", String.join("|", paths));
+            edit.putInt("currentIndex", currentIndex);
+            edit.apply();
         }
     }
 
@@ -185,25 +226,31 @@ public class CacheManager {
         synchronized (cache) {
             currentIndex++;
             if (cacheSize > 0) {
-                if (currentIndex >= bucketSize - 10) {
+                if (currentIndex >= cacheSize - cacheReadAhead) {
+                    // it's not done, so do it now
                     if (currentIndex >= cacheSize) {
+                        WorkManager.getInstance(c).cancelUniqueWork("WallpaperSwitcher.loadPapers");
                         populateCache();
                     }
 
+                    // if cache is not read ahead
                     if (cacheSize < bucketSize * 2)
                         queueCachePopulation(c);
 
-                    if (currentIndex >= bucketSize + 10)
+                    // cleanup cache
+                    if (currentIndex >= bucketSize + 5)
                         queueCacheCleanup(c);
 
                     path = cache.get(currentIndex).getAbsolutePath();
                 } else {
                     path = cache.get(currentIndex).getAbsolutePath();
-                    if (cacheSize > bucketSize)
+                    if (cacheSize > bucketSize && currentIndex >= bucketSize)
                         queueCacheCleanup(c);
                 }
             } else {
-                queueCachePopulation(c);
+                // no cache, so do it now
+                WorkManager.getInstance(c).cancelUniqueWork("WallpaperSwitcher.loadPapers");
+                populateCache();
             }
             sp.edit().putInt("currentIndex", currentIndex).apply();
         }
@@ -289,48 +336,141 @@ public class CacheManager {
     // region Worker Handling
     public void queueCachePopulation(Context c)
     {
-        WorkManager.getInstance(c).beginUniqueWork("loadPapers", ExistingWorkPolicy.KEEP,
-                getRequest(CachePopulationWorker.class)).enqueue();
+        WorkManager.getInstance(c).enqueueUniqueWork("WallpaperSwitcher.loadPapers",
+                ExistingWorkPolicy.KEEP, getRequest(CachePopulationWorker.class));
     }
 
     public void queueCacheCleanup(Context c)
     {
-        WorkManager.getInstance(c).beginUniqueWork("cleanCache", ExistingWorkPolicy.KEEP,
-                getRequest(CleanCacheWorker.class)).enqueue();
+        WorkManager.getInstance(c).enqueueUniqueWork("WallpaperSwitcher.cleanCache",
+                ExistingWorkPolicy.KEEP, getRequest(CleanCacheWorker.class));
+    }
+
+    public void queueCacheRebuild(Context c)
+    {
+        WorkManager.getInstance(c).enqueueUniqueWork("WallpaperSwitcher.rebuildCache",
+                ExistingWorkPolicy.KEEP, getRequest(RebuildCacheWorker.class));
     }
 
     private OneTimeWorkRequest getRequest(Class<? extends ListenableWorker> cls)
     {
-        return OneTimeWorkRequest.from(cls);
+        return new OneTimeWorkRequest.Builder(cls)
+                .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
+                .setBackoffCriteria(BackoffPolicy.LINEAR, OneTimeWorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
+                .build();
     }
 
     public static class CachePopulationWorker extends Worker {
+        private final Context context;
         public CachePopulationWorker(@NonNull Context context, @NonNull WorkerParameters params) {
             super(context, params);
+            this.context = context;
         }
 
         @Override
         @NonNull
         public Result doWork() {
+            if (!instance().isInitialized) instance().init(context);
             instance().populateCache();
 
             // Indicate whether the work finished successfully with the Result
             return Result.success();
         }
+
+        @NonNull
+        @Override
+        public ListenableFuture<ForegroundInfo> getForegroundInfoAsync() {
+            Notification notification = new Notification.Builder(context, "WallpaperSwitcher")
+                    .setSmallIcon(R.drawable.icon)
+                    .setOngoing(true)
+                    .setOnlyAlertOnce(true)
+                    .setContentTitle(context.getString(R.string.app_name))
+                    .setLocalOnly(true)
+                    .setVisibility(Notification.VISIBILITY_PUBLIC)
+                    .setContentText("Populating Cache")
+                    .build();
+            return CallbackToFutureAdapter.getFuture(completer -> {
+                completer.set(new ForegroundInfo(1415642, notification));
+                return "Populating Cache";
+            });
+        }
     }
 
     public static class CleanCacheWorker extends Worker {
+        private final Context context;
         public CleanCacheWorker(@NonNull Context context, @NonNull WorkerParameters params) {
             super(context, params);
+            this.context = context;
         }
 
         @Override
         @NonNull
         public Result doWork() {
+            if (!instance().isInitialized) instance().init(context);
             instance().cleanCache();
 
             // Indicate whether the work finished successfully with the Result
             return Result.success();
+        }
+
+        @NonNull
+        @Override
+        public ListenableFuture<ForegroundInfo> getForegroundInfoAsync() {
+            Notification notification = new Notification.Builder(context, "WallpaperSwitcher")
+                    .setSmallIcon(R.drawable.icon)
+                    .setOngoing(true)
+                    .setOnlyAlertOnce(true)
+                    .setContentTitle(context.getString(R.string.app_name))
+                    .setLocalOnly(true)
+                    .setVisibility(Notification.VISIBILITY_PUBLIC)
+                    .setContentText("Cleaning Cache")
+                    .build();
+            return CallbackToFutureAdapter.getFuture(completer -> {
+                completer.set(new ForegroundInfo(1415641, notification));
+                return "Cleaning Cache";
+            });
+        }
+    }
+
+    public static class RebuildCacheWorker extends Worker {
+        private final Context context;
+        public RebuildCacheWorker(@NonNull Context context, @NonNull WorkerParameters params) {
+            super(context, params);
+            this.context = context;
+        }
+
+        @Override
+        @NonNull
+        public Result doWork() {
+            CacheManager i = instance();
+            synchronized (i.cache) {
+                if (!i.isInitialized) i.init(context);
+                i.currentIndex = 0;
+                i.cache.clear();
+                i.cacheSize = 0;
+                i.populateCache();
+            }
+
+            // Indicate whether the work finished successfully with the Result
+            return Result.success();
+        }
+
+        @NonNull
+        @Override
+        public ListenableFuture<ForegroundInfo> getForegroundInfoAsync() {
+            Notification notification = new Notification.Builder(context, "WallpaperSwitcher")
+                    .setSmallIcon(R.drawable.icon)
+                    .setOngoing(true)
+                    .setOnlyAlertOnce(true)
+                    .setContentTitle(context.getString(R.string.app_name))
+                    .setLocalOnly(true)
+                    .setVisibility(Notification.VISIBILITY_PUBLIC)
+                    .setContentText("Rebuilding Cache")
+                    .build();
+            return CallbackToFutureAdapter.getFuture(completer -> {
+                completer.set(new ForegroundInfo(1415641, notification));
+                return "Rebuilding Cache";
+            });
         }
     }
     // endregion

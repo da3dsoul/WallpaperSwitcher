@@ -13,5 +13,34 @@
         android:id="@+id/debug_checkBox"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:minHeight="48dp"
         android:text="@string/debug_stats" />
+
+    <TextView
+        android:id="@+id/lblBucketSize"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center"
+        android:text="@string/txtBucketSize"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+
+    <NumberPicker
+        android:id="@+id/txtBucketSize"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:minHeight="48dp" />
+
+    <TextView
+        android:id="@+id/lblReadAhead"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:gravity="center"
+        android:text="@string/txtReadAhead"
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
+
+    <NumberPicker
+        android:id="@+id/txtReadAhead"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:minHeight="48dp" />
 </LinearLayout>
