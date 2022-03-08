@@ -58,7 +58,7 @@ public class CacheManager {
 
     public void init(Context c) {
         if (isInitialized) return;
-        NotificationChannel channel = new NotificationChannel("WallpaperSwitcher", "WallpaperSwitcher", NotificationManager.IMPORTANCE_DEFAULT);
+        NotificationChannel channel = new NotificationChannel("WallpaperSwitcher", "WallpaperSwitcher", NotificationManager.IMPORTANCE_LOW);
         channel.setDescription("WallpaperSwitcher");
         // Register the channel with the system; you can't change the importance
         // or other notification behaviors after this

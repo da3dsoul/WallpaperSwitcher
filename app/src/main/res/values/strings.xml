@@ -16,4 +16,6 @@
     <string name="debug_stats">Debug Stats</string>
     <string name="txtBucketSize">Bucket Size</string>
     <string name="txtReadAhead">Read Ahead</string>
+    <string name="no_results">No Wallpaper Found</string>
+    <string name="image">Image</string>
 </resources>

@@ -3,6 +3,11 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/da3ds/Documents/GitHub/WallpaperSwitcher/app/src/main/res/layout/activity_history_listing.xml" value="0.2421875" />
+        <entry key="..\:/Users/da3ds/Documents/GitHub/WallpaperSwitcher/app/src/main/res/layout/fragment_history_item.xml" value="0.2421875" />
+        <entry key="..\:/Users/da3ds/Documents/GitHub/WallpaperSwitcher/app/src/main/res/layout/history_item.xml" value="0.28020833333333334" />
+        <entry key="..\:/Users/da3ds/Documents/GitHub/WallpaperSwitcher/app/src/main/res/layout/history_listing_activity.xml" value="0.28020833333333334" />
+        <entry key="..\:/Users/da3ds/Documents/GitHub/WallpaperSwitcher/app/src/main/res/layout/input_file_list.xml" value="0.34601449275362317" />
         <entry key="..\:/Users/da3ds/Documents/GitHub/WallpaperSwitcher/app/src/main/res/layout/settings_activity.xml" value="0.2552083333333333" />
       </map>
     </option>
