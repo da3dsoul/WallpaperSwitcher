@@ -71,7 +71,7 @@ public class CacheManager {
 
         synchronized (cache) {
             String data = sp.getString("cache", "");
-            if (data != null) {
+            if (data != null && !data.equals("")) {
                 String[] deserialized = data.split("\\|");
                 for (String item : deserialized) {
                     File file = new File(item);

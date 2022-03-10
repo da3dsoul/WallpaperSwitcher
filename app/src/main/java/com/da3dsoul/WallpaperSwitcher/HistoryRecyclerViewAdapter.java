@@ -14,6 +14,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
+
 import java.util.List;
 
 public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecyclerViewAdapter.ViewHolder> {
@@ -37,7 +40,10 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
         String item = mValues.get(position);
         holder.uri = item;
         holder.mNameView.setText(item.substring(item.lastIndexOf("/")+1));
-        holder.mImageView.setImageURI(Uri.parse(item));
+        Glide.with(holder.mImageView.getContext())
+                .load(holder.uri)
+                .fitCenter()
+                .into(holder.mImageView);
 
         holder.mView.setOnClickListener(v -> {
             Intent openIntent = new Intent(Intent.ACTION_VIEW);
