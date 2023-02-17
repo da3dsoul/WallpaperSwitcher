@@ -10,6 +10,10 @@
     <string name="title_activity_settings">Settings</string>
     <string name="txtBucketSize">Bucket Size</string>
     <string name="txtReadAhead">Read Ahead</string>
+    <string name="txtMinAspect">Min Aspect</string>
+    <string name="txtMaxAspect">Max Aspect</string>
+    <string name="save">Save</string>
+    <string name="add">+</string>
     <string name="no_results">No Wallpaper Found</string>
     <string name="image">Image</string>
 </resources>

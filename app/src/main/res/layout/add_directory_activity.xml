@@ -2,54 +2,53 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:id="@+id/settings">
-
-    <CheckBox
-        android:id="@+id/debug_checkBox"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:minHeight="48dp"
-        android:text="@string/debug_stats" />
+    android:id="@+id/add_directory">
 
     <TextView
-        android:id="@+id/lblBucketSize"
+        android:id="@+id/lblMinAspect"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:gravity="center"
-        android:text="@string/txtBucketSize"
+        android:text="@string/txtMinAspect"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
     <NumberPicker
-        android:id="@+id/txtBucketSize"
+        android:id="@+id/txtMinAspect"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:minHeight="48dp" />
 
     <TextView
-        android:id="@+id/lblReadAhead"
+        android:id="@+id/lblMaxAspect"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:gravity="center"
-        android:text="@string/txtReadAhead"
+        android:text="@string/txtMaxAspect"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
     <NumberPicker
-        android:id="@+id/txtReadAhead"
+        android:id="@+id/txtMaxAspect"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:minHeight="48dp" />
 
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/folders"
+    <TextView
+        android:id="@+id/lblDirectory"
         android:layout_width="match_parent"
-        android:layout_height="312dp">
-
-    </androidx.recyclerview.widget.RecyclerView>
+        android:layout_height="48dp"
+        android:gravity="center"
+        android:text=""
+        android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
     <Button
-        android:id="@+id/add_button"
+        android:id="@+id/select_folder_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/add" />
+        android:text="@string/please_select" />
+
+    <Button
+        android:id="@+id/save_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/save" />
 </LinearLayout>

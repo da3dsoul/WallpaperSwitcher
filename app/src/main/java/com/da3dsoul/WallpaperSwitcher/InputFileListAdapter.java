@@ -13,11 +13,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.da3dsoul.WallpaperSwitcher.Activity.SelectDirActivity;
+
 public class InputFileListAdapter extends RecyclerView.Adapter<InputFileListAdapter.ViewHolder> {
     private final List<InputFileListItem> mList;
-    private final SelectDir parent;
+    private final SelectDirActivity parent;
 
-    public InputFileListAdapter(SelectDir parent, List<InputFileListItem> data) {
+    public InputFileListAdapter(SelectDirActivity parent, List<InputFileListItem> data) {
         super();
         mList = data;
         this.parent = parent;

@@ -1,4 +1,4 @@
-package com.da3dsoul.WallpaperSwitcher;
+package com.da3dsoul.WallpaperSwitcher.Activity;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -11,6 +11,10 @@ import android.view.View;
 import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.da3dsoul.WallpaperSwitcher.CacheManager;
+import com.da3dsoul.WallpaperSwitcher.HistoryRecyclerViewAdapter;
+import com.da3dsoul.WallpaperSwitcher.R;
 
 import java.io.File;
 import java.util.ArrayList;

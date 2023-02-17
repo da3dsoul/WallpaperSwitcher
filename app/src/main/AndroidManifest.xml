@@ -6,8 +6,6 @@
     android:versionName="v0.2.0">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -15,34 +13,34 @@
         android:icon="@drawable/icon"
         android:label="@string/app_name"
         android:requestLegacyExternalStorage="true"
-        tools:targetApi="Q"
+        tools:targetApi="31"
         android:theme="@style/Theme.MaterialComponents.DayNight"
         android:dataExtractionRules="@xml/data_extraction_rules">
         <activity
-            android:name=".SettingsActivity"
+            android:name=".Activity.SettingsActivity"
             android:label="@string/title_activity_settings" android:exported="true"
             android:theme="@style/Theme.AppCompat.DayNight" />
-        <activity android:name=".SelectDir" android:exported="false" />
-        <activity android:name=".ViewHistoryActivity" android:exported="true" android:theme="@style/Theme.Transparent" />
+        <activity android:name=".Activity.SelectDirActivity" android:exported="false" />
+        <activity android:name=".Activity.ViewHistoryActivity" android:exported="true" android:theme="@style/Theme.Transparent" />
         <activity
-            android:name=".ShareWallpaperActivity"
+            android:name=".Activity.ShareWallpaperActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" >
         </activity>
         <activity
-            android:name=".SwitchWallpaperActivity"
+            android:name=".Activity.SwitchWallpaperActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity
-            android:name=".OpenCurrentWallpaper"
+            android:name=".Activity.OpenCurrentWallpaperActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity
-            android:name=".OpenPreviousWallpaper"
+            android:name=".Activity.OpenPreviousWallpaperActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <activity
-            android:name=".OpenCurrentWallpaperOnPixiv"
+            android:name=".Activity.OpenCurrentWallpaperOnPixivActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 

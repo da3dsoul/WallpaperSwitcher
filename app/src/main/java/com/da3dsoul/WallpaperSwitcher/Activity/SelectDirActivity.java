@@ -1,4 +1,4 @@
-package com.da3dsoul.WallpaperSwitcher;
+package com.da3dsoul.WallpaperSwitcher.Activity;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -15,7 +15,11 @@ import androidx.recyclerview.widget.RecyclerView;
 import android.os.Environment;
 import android.widget.Button;
 
-public class SelectDir extends Activity {
+import com.da3dsoul.WallpaperSwitcher.InputFileListAdapter;
+import com.da3dsoul.WallpaperSwitcher.InputFileListItem;
+import com.da3dsoul.WallpaperSwitcher.R;
+
+public class SelectDirActivity extends Activity {
 
     public final List<InputFileListItem> directoryEntries = new ArrayList<>();
     private File currentDirectory = new File(Environment.getExternalStorageDirectory().getPath());
@@ -35,9 +39,9 @@ public class SelectDir extends Activity {
         select.setOnClickListener(v -> {
             Intent it = new Intent();
             it.putExtra("dir", currentDirectory.getAbsolutePath());
-            it.setClass(SelectDir.this, SettingsActivity.class);
-            SelectDir.this.setResult(RESULT_FIRST_USER, it);
-            SelectDir.this.finish();
+            it.setClass(SelectDirActivity.this, SettingsActivity.class);
+            SelectDirActivity.this.setResult(RESULT_FIRST_USER, it);
+            SelectDirActivity.this.finish();
         });
         browseToRoot();
     }

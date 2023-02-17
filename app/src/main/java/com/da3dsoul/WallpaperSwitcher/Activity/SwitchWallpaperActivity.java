@@ -1,7 +1,9 @@
-package com.da3dsoul.WallpaperSwitcher;
+package com.da3dsoul.WallpaperSwitcher.Activity;
 
 import android.app.Activity;
 import android.os.Bundle;
+
+import com.da3dsoul.WallpaperSwitcher.CacheManager;
 
 import java.util.Map;
 import java.util.UUID;

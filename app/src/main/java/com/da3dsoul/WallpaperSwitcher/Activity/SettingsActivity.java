@@ -1,4 +1,4 @@
-package com.da3dsoul.WallpaperSwitcher;
+package com.da3dsoul.WallpaperSwitcher.Activity;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -11,6 +11,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.da3dsoul.WallpaperSwitcher.CacheManager;
+import com.da3dsoul.WallpaperSwitcher.R;
 
 public class SettingsActivity extends AppCompatActivity {
 
@@ -59,7 +62,7 @@ public class SettingsActivity extends AppCompatActivity {
             sp.edit().putInt("readAhead", current).apply();
         });
 
-        Button select_button = findViewById(R.id.select_folder_button);
+        Button select_button = findViewById(R.id.add_button);
 
         resultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(),
             result -> {
@@ -71,7 +74,7 @@ public class SettingsActivity extends AppCompatActivity {
             });
 
         select_button.setOnClickListener(v -> {
-            Intent it = new Intent(SettingsActivity.this, SelectDir.class);
+            Intent it = new Intent(SettingsActivity.this, SelectDirActivity.class);
             resultLauncher.launch(it);
         });
     }

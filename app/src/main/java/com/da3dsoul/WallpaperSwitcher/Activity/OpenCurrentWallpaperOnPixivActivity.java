@@ -1,4 +1,4 @@
-package com.da3dsoul.WallpaperSwitcher;
+package com.da3dsoul.WallpaperSwitcher.Activity;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -7,13 +7,13 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.da3dsoul.WallpaperSwitcher.CacheManager;
+
 import java.io.File;
-import java.util.Map;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class OpenCurrentWallpaperOnPixiv extends Activity {
+public class OpenCurrentWallpaperOnPixivActivity extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

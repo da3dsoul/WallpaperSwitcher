@@ -1,4 +1,4 @@
-package com.da3dsoul.WallpaperSwitcher;
+package com.da3dsoul.WallpaperSwitcher.Activity;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.util.Log;
 
 import androidx.core.content.FileProvider;
+
+import com.da3dsoul.WallpaperSwitcher.CacheManager;
 
 import java.io.File;
 import java.util.List;
