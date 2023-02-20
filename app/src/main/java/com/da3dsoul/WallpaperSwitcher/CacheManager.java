@@ -1,5 +1,6 @@
 package com.da3dsoul.WallpaperSwitcher;
 
+
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -19,13 +20,17 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -35,8 +40,10 @@ public class CacheManager {
     // region variables and init
     public static int baseBucketSize = 100;
     public static int cacheReadAhead = 50;
-    private static CacheManager _instance = null;
+    private static final HashMap<String, CacheManager> _instances = new HashMap<>();
     private final HashSet<INotifyWallpaperChanged> listeners = new HashSet<>();
+    public final double minAspect;
+    public final double maxAspect;
     public String path;
     public int currentIndex = 0;
     public ArrayList<File> sourceDirectories = new ArrayList<>();
@@ -46,10 +53,39 @@ public class CacheManager {
     private boolean isInitialized;
     private SharedPreferences sp;
 
-    public static CacheManager instance()
+    public CacheManager(double minAspect, double maxAspect) {
+        this.minAspect = minAspect;
+        this.maxAspect = maxAspect;
+    }
+
+    public String getKey()
     {
-        if (_instance == null) _instance = new CacheManager();
-        return _instance;
+        return getKey(minAspect, maxAspect);
+    }
+
+    public static String getKey(double minAspect, double maxAspect)
+    {
+        return String.format("%.1f:%.1f", minAspect, maxAspect);
+    }
+
+    public static CacheManager instance(double minAspect, double maxAspect)
+    {
+        String key = getKey(minAspect, maxAspect);
+        if (!_instances.containsKey(key)) _instances.put(key, new CacheManager(minAspect, maxAspect));
+        return _instances.get(key);
+    }
+
+    public static CacheManager instanceForCanvas(double aspect)
+    {
+        for (CacheManager cache : _instances.values()) {
+            if (aspect >= cache.minAspect && aspect <= cache.maxAspect) return cache;
+        }
+        return null;
+    }
+
+    public static CacheManager[] allInstances()
+    {
+        return _instances.values().toArray(new CacheManager[0]);
     }
 
     public boolean isInitialized() {
@@ -71,14 +107,24 @@ public class CacheManager {
 
         synchronized (cache) {
             String data = sp.getString("cache", "");
-            if (data != null && !data.equals("")) {
-                String[] deserialized = data.split("\\|");
-                for (String item : deserialized) {
-                    File file = new File(item);
-                    if (!file.isFile() || !file.exists()) continue;
-                    cache.add(file);
+            if (!data.equals("")) {
+                try
+                {
+                    Gson gson = new Gson();
+                    Type collectionType = new TypeToken<HashMap<String,String[]>>(){}.getType();
+                    HashMap<String,String[]> files = gson.fromJson(data, collectionType);
+                    String key = getKey();
+                    if (files.containsKey(key)) {
+                        for (String item : files.get(key)) {
+                            File file = new File(item);
+                            if (!file.isFile() || !file.exists()) continue;
+                            cache.add(file);
+                        }
+                    }
+                } catch (Exception e)
+                {
+                    // ignore
                 }
-
             }
 
             cacheSize = cache.size();
@@ -98,17 +144,15 @@ public class CacheManager {
     }
 
     public boolean ParseSourceDirectories(SharedPreferences sharedPreferences) {
-        if (sourceDirectories == null) sourceDirectories = new ArrayList<>();
-        else sourceDirectories.clear();
+        String directorySetting = sharedPreferences.getString("directories", null);
+        if (directorySetting == null || directorySetting.equals("")) return true;
+        Gson gson = new Gson();
+        DirectoryModel[] directories = gson.fromJson(directorySetting, DirectoryModel[].class);
 
-        String directories = sharedPreferences.getString("dir", "");
-        if (directories == null) {
-            return true;
-        }
-
-        String[] parsedDirectories = directories.split("\\|");
-        for (String dir : parsedDirectories) {
-            File file = new File(dir);
+        for (DirectoryModel dir : directories) {
+            if (Math.abs(dir.MinAspect - minAspect) > 0.001D) continue;
+            if (Math.abs(dir.MaxAspect - maxAspect) > 0.001D) continue;
+            File file = new File(dir.Directory);
             if (!file.exists() || !file.isDirectory()) continue;
             sourceDirectories.add(file);
         }
@@ -135,7 +179,7 @@ public class CacheManager {
     {
         synchronized (listeners) {
             for (INotifyWallpaperChanged item : listeners) {
-                item.WallpaperChanged();
+                item.WallpaperChanged(this);
             }
         }
     }
@@ -174,6 +218,18 @@ public class CacheManager {
 
             SharedPreferences.Editor edit = sp.edit();
             edit.putLong("seed", getSeed(rand));
+
+            HashMap<String,String[]> filesMap;
+            String key = getKey();
+            Gson gson = new Gson();
+            try {
+                Type collectionType = new TypeToken<HashMap<String, String[]>>() {}.getType();
+                filesMap = gson.fromJson(sp.getString("cache", ""), collectionType);
+            } catch (Exception e)
+            {
+                filesMap = new HashMap<>();
+            }
+
             if (cacheSize > 0) {
                 if (currentIndex < cacheSize)
                     path = cache.get(currentIndex).getAbsolutePath();
@@ -184,9 +240,12 @@ public class CacheManager {
                 for (int i = 0; i < cacheSize; i++) {
                     paths[i] = cache.get(i).getAbsolutePath();
                 }
-                edit.putString("cache", String.join("|", paths));
+
+                filesMap.put(key, paths);
+                edit.putString("cache", gson.toJson(filesMap));
             } else {
-                edit.putString("cache", "");
+                filesMap.remove(key);
+                edit.putString("cache", gson.toJson(filesMap));
             }
             edit.apply();
         }
@@ -206,7 +265,20 @@ public class CacheManager {
             for (int i = 0; i < cacheSize; i++) {
                 paths[i] = cache.get(i).getAbsolutePath();
             }
-            edit.putString("cache", String.join("|", paths));
+
+            HashMap<String,String[]> filesMap;
+            String key = getKey();
+            Gson gson = new Gson();
+            try {
+                Type collectionType = new TypeToken<HashMap<String, String[]>>() {}.getType();
+                filesMap = gson.fromJson(sp.getString("cache", ""), collectionType);
+            } catch (Exception e)
+            {
+                filesMap = new HashMap<>();
+            }
+
+            filesMap.put(key, paths);
+            edit.putString("cache", gson.toJson(filesMap));
             edit.putInt("currentIndex", currentIndex);
             edit.apply();
         }
@@ -370,8 +442,10 @@ public class CacheManager {
         @Override
         @NonNull
         public Result doWork() {
-            if (!instance().isInitialized) instance().init(context);
-            instance().populateCache();
+            for (CacheManager cache : _instances.values()) {
+                if (!cache.isInitialized) cache.init(context);
+                cache.populateCache();
+            }
 
             // Indicate whether the work finished successfully with the Result
             return Result.success();
@@ -406,8 +480,10 @@ public class CacheManager {
         @Override
         @NonNull
         public Result doWork() {
-            if (!instance().isInitialized) instance().init(context);
-            instance().cleanCache();
+            for (CacheManager cache : _instances.values()) {
+                if (!cache.isInitialized) cache.init(context);
+                cache.cleanCache();
+            }
 
             // Indicate whether the work finished successfully with the Result
             return Result.success();
@@ -442,13 +518,14 @@ public class CacheManager {
         @Override
         @NonNull
         public Result doWork() {
-            CacheManager i = instance();
-            synchronized (i.cache) {
-                if (!i.isInitialized) i.init(context);
-                i.currentIndex = 0;
-                i.cache.clear();
-                i.cacheSize = 0;
-                i.populateCache();
+            for (CacheManager cache : _instances.values()) {
+                synchronized (cache.cache) {
+                    if (!cache.isInitialized) cache.init(context);
+                    cache.currentIndex = 0;
+                    cache.cache.clear();
+                    cache.cacheSize = 0;
+                    cache.populateCache();
+                }
             }
 
             // Indicate whether the work finished successfully with the Result

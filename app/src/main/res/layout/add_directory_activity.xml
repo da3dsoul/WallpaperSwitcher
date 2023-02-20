@@ -12,7 +12,7 @@
         android:text="@string/txtMinAspect"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
-    <NumberPicker
+    <com.da3dsoul.WallpaperSwitcher.DecimalPicker
         android:id="@+id/txtMinAspect"
         android:layout_width="match_parent"
         android:layout_height="48dp"
@@ -26,7 +26,7 @@
         android:text="@string/txtMaxAspect"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium" />
 
-    <NumberPicker
+    <com.da3dsoul.WallpaperSwitcher.DecimalPicker
         android:id="@+id/txtMaxAspect"
         android:layout_width="match_parent"
         android:layout_height="48dp"
@@ -51,4 +51,10 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/save" />
+
+    <Button
+        android:id="@+id/delete_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/delete" />
 </LinearLayout>

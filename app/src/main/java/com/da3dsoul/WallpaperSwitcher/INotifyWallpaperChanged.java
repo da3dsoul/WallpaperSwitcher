@@ -1,5 +1,5 @@
 package com.da3dsoul.WallpaperSwitcher;
 
 public interface INotifyWallpaperChanged {
-    void WallpaperChanged();
+    void WallpaperChanged(CacheManager cache);
 }

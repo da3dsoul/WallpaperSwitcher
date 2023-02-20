@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.da3dsoul.WallpaperSwitcher"
     android:versionCode="0"
     android:versionName="v0.2.0">
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
 
     <application
         android:allowBackup="true"
@@ -20,6 +20,7 @@
             android:name=".Activity.SettingsActivity"
             android:label="@string/title_activity_settings" android:exported="true"
             android:theme="@style/Theme.AppCompat.DayNight" />
+        <activity android:name=".Activity.AddDirectoryActivity" android:exported="false" />
         <activity android:name=".Activity.SelectDirActivity" android:exported="false" />
         <activity android:name=".Activity.ViewHistoryActivity" android:exported="true" android:theme="@style/Theme.Transparent" />
         <activity
@@ -43,6 +44,10 @@
             android:name=".Activity.OpenCurrentWallpaperOnPixivActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity
+            android:name=".Activity.OpenCurrentWallpaperOnDa3dsoulActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
         <service
             android:name=".WallpaperSwitcher"
@@ -58,15 +63,9 @@
                 android:resource="@xml/wallpaper" />
         </service>
 
-        <receiver android:name=".ScreenEventReceiver" android:exported="true">
-            <intent-filter>
-                <action android:name="android.intent.action.SCREEN_ON" />
-            </intent-filter>
-        </receiver>
-
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
+            android:authorities="${applicationId}"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data

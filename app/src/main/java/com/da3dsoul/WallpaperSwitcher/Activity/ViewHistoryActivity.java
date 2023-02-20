@@ -1,11 +1,9 @@
 package com.da3dsoul.WallpaperSwitcher.Activity;
 
 import android.app.Activity;
-import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
-import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -16,7 +14,6 @@ import com.da3dsoul.WallpaperSwitcher.CacheManager;
 import com.da3dsoul.WallpaperSwitcher.HistoryRecyclerViewAdapter;
 import com.da3dsoul.WallpaperSwitcher.R;
 
-import java.io.File;
 import java.util.ArrayList;
 
 public class ViewHistoryActivity  extends Activity {
@@ -24,7 +21,20 @@ public class ViewHistoryActivity  extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (!CacheManager.instance().isInitialized()) {
+
+        DisplayMetrics metrics = new DisplayMetrics();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            getDisplay().getRealMetrics(metrics);
+        }
+
+        if (metrics.widthPixels == 0 || metrics.heightPixels == 0) {
+            finish();
+            return;
+        }
+
+        double aspect = (double)metrics.widthPixels/metrics.heightPixels;
+        CacheManager cache = CacheManager.instanceForCanvas(aspect);
+        if (cache == null || !cache.isInitialized()) {
             finish();
             return;
         }
@@ -35,10 +45,10 @@ public class ViewHistoryActivity  extends Activity {
             RecyclerView recyclerView = findViewById(R.id.history_list);
 
             ArrayList<String> matches = new ArrayList<>();
-            int index = CacheManager.instance().currentIndex;
+            int index = cache.currentIndex;
             for (int i = index; i >= 0; i--)
             {
-                matches.add(CacheManager.instance().cache.get(i).getAbsolutePath());
+                matches.add(cache.cache.get(i).getAbsolutePath());
             }
 
             recyclerView.setAdapter(new HistoryRecyclerViewAdapter(matches));

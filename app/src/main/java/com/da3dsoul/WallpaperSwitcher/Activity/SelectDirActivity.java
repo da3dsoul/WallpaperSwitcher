@@ -32,14 +32,14 @@ public class SelectDirActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.input_file_list);
         fileList = findViewById(R.id.listview);
-		listAdapter = new InputFileListAdapter(this, this.directoryEntries);
-		fileList.setAdapter(listAdapter);
+        listAdapter = new InputFileListAdapter(this, this.directoryEntries);
+        fileList.setAdapter(listAdapter);
 
         Button select = findViewById(R.id.select);
         select.setOnClickListener(v -> {
             Intent it = new Intent();
             it.putExtra("dir", currentDirectory.getAbsolutePath());
-            it.setClass(SelectDirActivity.this, SettingsActivity.class);
+            it.setClass(SelectDirActivity.this, AddDirectoryActivity.class);
             SelectDirActivity.this.setResult(RESULT_FIRST_USER, it);
             SelectDirActivity.this.finish();
         });
@@ -47,7 +47,7 @@ public class SelectDirActivity extends Activity {
     }
 
     public void browseToRoot() {
-        requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE}, 138);
+        requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, 138);
         this.setTitle("Storage");
         File[] storages = ContextCompat.getExternalFilesDirs(getApplicationContext(), null);
         if (storages.length <= 0) browseTo(new File(Environment.getExternalStorageDirectory().getPath()));

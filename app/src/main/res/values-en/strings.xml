@@ -16,4 +16,5 @@
     <string name="add">+</string>
     <string name="no_results">No Wallpaper Found</string>
     <string name="image">Image</string>
+    <string name="delete">Delete</string>
 </resources>
