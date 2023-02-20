@@ -128,7 +128,18 @@ public class CacheManager {
             }
 
             cacheSize = cache.size();
-            currentIndex = Math.max(sp.getInt("currentIndex", 0), 0);
+            String key = getKey();
+            Gson gson = new Gson();
+            try {
+                Type collectionType = new TypeToken<HashMap<String, Integer>>() {}.getType();
+                HashMap<String,Integer> indexMap = gson.fromJson(sp.getString("currentIndexes", null), collectionType);
+                if (indexMap != null && indexMap.containsKey(key)) currentIndex = indexMap.get(key);
+                else currentIndex = 0;
+            } catch (Exception e)
+            {
+                currentIndex = 0;
+            }
+
             baseBucketSize = Math.max(sp.getInt("bucketSize", baseBucketSize), 0);
             bucketSize = baseBucketSize;
             cacheReadAhead = Math.max(sp.getInt("readAhead", cacheReadAhead), 0);
@@ -267,6 +278,7 @@ public class CacheManager {
             }
 
             HashMap<String,String[]> filesMap;
+            HashMap<String,Integer> indexMap;
             String key = getKey();
             Gson gson = new Gson();
             try {
@@ -279,7 +291,19 @@ public class CacheManager {
 
             filesMap.put(key, paths);
             edit.putString("cache", gson.toJson(filesMap));
-            edit.putInt("currentIndex", currentIndex);
+
+            try {
+                Type collectionType = new TypeToken<HashMap<String, Integer>>() {}.getType();
+                indexMap = gson.fromJson(sp.getString("currentIndexes", null), collectionType);
+                if (indexMap == null) indexMap = new HashMap<>();
+            } catch (Exception e)
+            {
+                indexMap = new HashMap<>();
+            }
+
+            indexMap.put(key, currentIndex);
+            edit.putString("currentIndexes", gson.toJson(indexMap));
+
             edit.apply();
         }
     }
@@ -324,7 +348,22 @@ public class CacheManager {
                 WorkManager.getInstance(c).cancelUniqueWork("WallpaperSwitcher.loadPapers");
                 populateCache();
             }
-            sp.edit().putInt("currentIndex", currentIndex).apply();
+
+            HashMap<String,Integer> indexMap;
+            String key = getKey();
+            Gson gson = new Gson();
+
+            try {
+                Type collectionType = new TypeToken<HashMap<String, Integer>>() {}.getType();
+                indexMap = gson.fromJson(sp.getString("currentIndexes", null), collectionType);
+                if (indexMap == null) indexMap = new HashMap<>();
+            } catch (Exception e)
+            {
+                indexMap = new HashMap<>();
+            }
+
+            indexMap.put(key, currentIndex);
+            sp.edit().putString("currentIndexes", gson.toJson(indexMap)).apply();
         }
         notifyListeners();
     }
