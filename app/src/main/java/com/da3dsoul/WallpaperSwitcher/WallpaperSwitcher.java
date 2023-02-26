@@ -14,6 +14,7 @@ import android.os.Build;
 import android.service.wallpaper.WallpaperService;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 
 import com.google.gson.Gson;
@@ -52,7 +53,7 @@ public class WallpaperSwitcher extends WallpaperService {
                             if (metrics.widthPixels == 0 || metrics.heightPixels == 0) return;
                             double aspect = (double) metrics.widthPixels / metrics.heightPixels;
                             CacheManager cache = CacheManager.instanceForCanvas(aspect);
-                            if (cache == null || !cache.isInitialized()) return;
+                            if (cache == null || cache.needsInitialized()) return;
                             cache.switchWallpaper(context);
                         } catch (Exception e)
                         {
@@ -94,6 +95,10 @@ public class WallpaperSwitcher extends WallpaperService {
         private void drawFrame(CacheManager cache, SurfaceHolder holder) {
             if (noDraw) return;
             if (holder == null) holder = getSurfaceHolder();
+            if (!holder.getSurface().isValid()) return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                holder.getSurface().setFrameRate(0, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE);
+            }
 
             Canvas c = null;
             try {
@@ -112,7 +117,7 @@ public class WallpaperSwitcher extends WallpaperService {
             Bitmap paper = null;
 
             if (cache == null) cache = CacheManager.instanceForCanvas((double)c.getWidth() / c.getHeight());
-            if (cache == null || !cache.isInitialized()) return;
+            if (cache == null || cache.needsInitialized()) return;
             String path = cache.path;
             if (path != null && !path.equals("")) paper = BitmapFactory.decodeFile(path);
             if (paper == null) {
@@ -120,8 +125,8 @@ public class WallpaperSwitcher extends WallpaperService {
                 opts.inSampleSize = 1;
                 paper = BitmapFactory.decodeResource(getResources(), R.drawable.saber_lily, opts);
             }
-            int height = Math.max(c.getWidth(), c.getHeight());
-            int width = Math.min(c.getWidth(), c.getHeight());
+            int height = c.getHeight();
+            int width = c.getWidth();
             Paint black = new Paint();
             black.setARGB(255, 0, 0, 0);
             c.drawRect(0, 0, width, height, black);
@@ -201,6 +206,10 @@ public class WallpaperSwitcher extends WallpaperService {
         @Override
         public void WallpaperChanged(CacheManager cache) {
             drawFrame(cache, (SurfaceHolder)null);
+        }
+
+        @Override
+        public void onOffsetsChanged(float xOffset, float yOffset, float xOffsetStep, float yOffsetStep, int xPixelOffset, int yPixelOffset) {
         }
     }
 

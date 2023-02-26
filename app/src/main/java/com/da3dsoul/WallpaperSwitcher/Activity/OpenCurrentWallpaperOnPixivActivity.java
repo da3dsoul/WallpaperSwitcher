@@ -33,7 +33,7 @@ public class OpenCurrentWallpaperOnPixivActivity extends Activity {
 
         double aspect = (double)metrics.widthPixels/metrics.heightPixels;
         CacheManager cache = CacheManager.instanceForCanvas(aspect);
-        if (cache == null || !cache.isInitialized()) {
+        if (cache == null || cache.needsInitialized()) {
             finish();
             return;
         }

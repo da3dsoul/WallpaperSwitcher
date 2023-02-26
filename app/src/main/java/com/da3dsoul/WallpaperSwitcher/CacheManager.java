@@ -15,6 +15,7 @@ import androidx.work.ForegroundInfo;
 import androidx.work.ListenableWorker;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.OutOfQuotaPolicy;
+import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -33,6 +34,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
@@ -65,7 +68,7 @@ public class CacheManager {
 
     public static String getKey(double minAspect, double maxAspect)
     {
-        return String.format("%.1f:%.1f", minAspect, maxAspect);
+        return String.format(Locale.ENGLISH, "%.1f:%.1f", minAspect, maxAspect);
     }
 
     public static CacheManager instance(double minAspect, double maxAspect)
@@ -88,8 +91,8 @@ public class CacheManager {
         return _instances.values().toArray(new CacheManager[0]);
     }
 
-    public boolean isInitialized() {
-        return isInitialized;
+    public boolean needsInitialized() {
+        return !isInitialized;
     }
 
     public void init(Context c) {
@@ -115,7 +118,7 @@ public class CacheManager {
                     HashMap<String,String[]> files = gson.fromJson(data, collectionType);
                     String key = getKey();
                     if (files.containsKey(key)) {
-                        for (String item : files.get(key)) {
+                        for (String item : Objects.requireNonNull(files.get(key))) {
                             File file = new File(item);
                             if (!file.isFile() || !file.exists()) continue;
                             cache.add(file);
@@ -144,8 +147,7 @@ public class CacheManager {
             bucketSize = baseBucketSize;
             cacheReadAhead = Math.max(sp.getInt("readAhead", cacheReadAhead), 0);
 
-            if (cacheSize == 0) populateCache();
-            else queueCachePopulation(c);
+            queueCachePopulation(c);
 
             if (currentIndex < cacheSize) {
                 path = cache.get(currentIndex).getAbsolutePath();
@@ -207,7 +209,10 @@ public class CacheManager {
             recursivelyAddWallpapers(files, dir);
         }
         if (files.size() < bucketSize) bucketSize = files.size();
-        else if (bucketSize < baseBucketSize && files.size() >= bucketSize) bucketSize = baseBucketSize;
+        else if (bucketSize < baseBucketSize) {
+            files.size();
+            bucketSize = baseBucketSize;
+        }
 
         files.removeAll(temp);
 
@@ -219,20 +224,28 @@ public class CacheManager {
         }
 
         synchronized (cache) {
-            long seed = sp.getLong("seed", -1);
-            Random rand;
-            if (seed != -1) rand = new Random(seed);
-            else rand = new Random();
+            HashMap<String,Long> seedMap;
+            String key = getKey();
+            Gson gson = new Gson();
+            try {
+                Type collectionType = new TypeToken<HashMap<String,Long>>() {}.getType();
+                seedMap = gson.fromJson(sp.getString("seed", ""), collectionType);
+            } catch (Exception e)
+            {
+                seedMap = new HashMap<>();
+            }
+            long seed = seedMap.containsKey(key) ? seedMap.get(key) : -1;
+            Random rand = seed != -1 ? new Random(seed) : new Random();
 
             cache.addAll(pickNRandomElements(files, bucketSize, rand));
             cacheSize = cache.size();
 
+            seedMap.put(key, getSeed(rand));
+
             SharedPreferences.Editor edit = sp.edit();
-            edit.putLong("seed", getSeed(rand));
+            edit.putString("seed", gson.toJson(seedMap));
 
             HashMap<String,String[]> filesMap;
-            String key = getKey();
-            Gson gson = new Gson();
             try {
                 Type collectionType = new TypeToken<HashMap<String, String[]>>() {}.getType();
                 filesMap = gson.fromJson(sp.getString("cache", ""), collectionType);
@@ -260,6 +273,8 @@ public class CacheManager {
             }
             edit.apply();
         }
+
+        if (temp.size() <= 0) notifyListeners();
     }
 
     private void cleanCache() {
@@ -320,13 +335,16 @@ public class CacheManager {
 
     public void switchWallpaper(Context c) {
         synchronized (cache) {
-            currentIndex++;
+            File currentFile;
+            do {
+                currentIndex++;
+            } while ((currentFile = getCacheIndex(currentIndex)) != null && currentFile.exists());
+
             if (cacheSize > 0) {
                 if (currentIndex >= cacheSize - cacheReadAhead) {
                     // it's not done, so do it now
                     if (currentIndex >= cacheSize) {
-                        WorkManager.getInstance(c).cancelUniqueWork("WallpaperSwitcher.loadPapers");
-                        populateCache();
+                        waitForPopulation(c);
                     }
 
                     // if cache is not read ahead
@@ -345,8 +363,7 @@ public class CacheManager {
                 }
             } else {
                 // no cache, so do it now
-                WorkManager.getInstance(c).cancelUniqueWork("WallpaperSwitcher.loadPapers");
-                populateCache();
+                waitForPopulation(c);
             }
 
             HashMap<String,Integer> indexMap;
@@ -366,6 +383,21 @@ public class CacheManager {
             sp.edit().putString("currentIndexes", gson.toJson(indexMap)).apply();
         }
         notifyListeners();
+    }
+
+    private void waitForPopulation(Context c) {
+        ListenableFuture<List<WorkInfo>> workInfos = WorkManager.getInstance(c).getWorkInfosForUniqueWork("WallpaperSwitcher.loadPapers");
+        try {
+            List<WorkInfo> infos = workInfos.get();
+            if (infos.size() > 0)
+            {
+                while (!infos.get(0).getState().isFinished()) {
+                    Thread.sleep(50);
+                }
+            }
+        } catch (Exception e) {
+            // ignore
+        }
     }
 
     // region Utility methods

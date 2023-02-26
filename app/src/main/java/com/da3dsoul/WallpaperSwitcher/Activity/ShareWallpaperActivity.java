@@ -2,8 +2,6 @@ package com.da3dsoul.WallpaperSwitcher.Activity;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,7 +14,6 @@ import com.da3dsoul.WallpaperSwitcher.BuildConfig;
 import com.da3dsoul.WallpaperSwitcher.CacheManager;
 
 import java.io.File;
-import java.util.List;
 
 public class ShareWallpaperActivity extends Activity {
 
@@ -36,7 +33,7 @@ public class ShareWallpaperActivity extends Activity {
 
         double aspect = (double)metrics.widthPixels/metrics.heightPixels;
         CacheManager cache = CacheManager.instanceForCanvas(aspect);
-        if (cache == null || !cache.isInitialized()) {
+        if (cache == null || cache.needsInitialized()) {
             finish();
             return;
         }

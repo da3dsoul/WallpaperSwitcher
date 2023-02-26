@@ -14,6 +14,7 @@ import com.da3dsoul.WallpaperSwitcher.CacheManager;
 import com.da3dsoul.WallpaperSwitcher.HistoryRecyclerViewAdapter;
 import com.da3dsoul.WallpaperSwitcher.R;
 
+import java.io.File;
 import java.util.ArrayList;
 
 public class ViewHistoryActivity  extends Activity {
@@ -34,7 +35,7 @@ public class ViewHistoryActivity  extends Activity {
 
         double aspect = (double)metrics.widthPixels/metrics.heightPixels;
         CacheManager cache = CacheManager.instanceForCanvas(aspect);
-        if (cache == null || !cache.isInitialized()) {
+        if (cache == null || cache.needsInitialized()) {
             finish();
             return;
         }
@@ -48,7 +49,9 @@ public class ViewHistoryActivity  extends Activity {
             int index = cache.currentIndex;
             for (int i = index; i >= 0; i--)
             {
-                matches.add(cache.cache.get(i).getAbsolutePath());
+                File file = cache.cache.get(i);
+                if (!file.exists()) continue;
+                matches.add(file.getAbsolutePath());
             }
 
             recyclerView.setAdapter(new HistoryRecyclerViewAdapter(matches));
