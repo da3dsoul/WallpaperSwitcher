@@ -19,6 +19,8 @@ import android.view.SurfaceHolder;
 
 import com.google.gson.Gson;
 
+import java.util.Locale;
+
 
 public class WallpaperSwitcher extends WallpaperService {
 
@@ -120,38 +122,55 @@ public class WallpaperSwitcher extends WallpaperService {
             if (cache == null || cache.needsInitialized()) return;
             String path = cache.path;
             if (path != null && !path.equals("")) paper = BitmapFactory.decodeFile(path);
-            if (paper == null) {
-                BitmapFactory.Options opts = new BitmapFactory.Options();
-                opts.inSampleSize = 1;
-                paper = BitmapFactory.decodeResource(getResources(), R.drawable.saber_lily, opts);
+            if (paper != null) {
+                int height = c.getHeight();
+                int width = c.getWidth();
+                Paint black = new Paint();
+                black.setARGB(255, 0, 0, 0);
+                c.drawRect(0, 0, width, height, black);
+                double ar = (double) paper.getWidth() / paper.getHeight();
+                Bitmap output = Bitmap.createScaledBitmap(paper, width, (int) Math.round(width / ar), true);
+                c.drawBitmap(output, 0, (int) Math.floor(height / 2D - output.getHeight() / 2D), null);
+            } else if (CacheManager.Progress.TotalFiles != 0 || CacheManager.Progress.AddedFiles != 0)
+            {
+                Paint white = new Paint();
+                white.setARGB(255, 255, 255, 255);
+                white.setShadowLayer(4, 2, 2, 0);
+                white.setTextAlign(Paint.Align.CENTER);
+                int lines = 3;
+                int buffer = 24;
+                int fontSize = 64;
+                white.setTextSize(fontSize);
+                float totalHeight = (white.ascent() + white.descent()) * lines + buffer * (lines - 1);
+                int y = (int) Math.floor(c.getHeight() / 2D - totalHeight / 2D);
+                int x = (int) Math.floor(c.getWidth() / 2D);
+                c.drawText("Building Cache", x, y, white);
+                y += fontSize + buffer;
+                c.drawText(String.format(Locale.ENGLISH, "%.1f%%", CacheManager.Progress.PercentComplete), x, y, white);
+                y += fontSize + buffer;
+                c.drawText(String.format(Locale.ENGLISH, "%s/%s", CacheManager.Progress.AddedFiles, CacheManager.Progress.TotalFiles), x, y, white);
             }
-            int height = c.getHeight();
-            int width = c.getWidth();
-            Paint black = new Paint();
-            black.setARGB(255, 0, 0, 0);
-            c.drawRect(0, 0, width, height, black);
-            double ar = (double) paper.getWidth() / paper.getHeight();
-            Bitmap output = Bitmap.createScaledBitmap(paper, width, (int) Math.round(width / ar), true);
-            c.drawBitmap(output, 0, (int) Math.floor(height / 2D - output.getHeight() / 2D), null);
+
             if (sp.getBoolean("debug_stats", false)) {
                 Paint white = new Paint();
                 white.setARGB(255, 255, 255, 255);
                 white.setShadowLayer(4, 2, 2, 0);
                 int fontSize = 24;
+                int buffer = 8;
                 white.setTextSize(fontSize);
                 int y = 100;
                 c.drawText("Path: " + path, 10, y, white);
-                y += fontSize + 8;
+                y += fontSize + buffer;
                 c.drawText("CurrentIndex: " + cache.currentIndex +
                         "   Cache Size: " + cache.cacheSize, 10, y, white);
-                y += fontSize + 8;
+                y += fontSize + buffer;
                 c.drawText("bucketSize: " + cache.bucketSize + "   baseBucketSize: "
                         + CacheManager.baseBucketSize, 10, y, white);
-                y += fontSize + 8;
+                y += fontSize + buffer;
                 c.drawText("ReadAhead: " + CacheManager.cacheReadAhead + "   BucketSeed: " + sp.getLong("seed", 0), 10, y, white);
-                y += fontSize + 8;
+                y += fontSize + buffer;
                 c.drawText("Canvas Width: " + c.getWidth() + "   Canvas Height: " + c.getHeight(), 10, y, white);
-                y += fontSize + 8;
+                y += fontSize + buffer;
                 c.drawText("Cache minAspect: " + cache.minAspect + "   Cache maxAspect: " + cache.maxAspect + "   Aspect: " + (double)c.getWidth() / c.getHeight(), 10, y, white);
             }
         }

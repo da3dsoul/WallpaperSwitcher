@@ -37,7 +37,7 @@ public class OpenPreviousWallpaperActivity extends Activity {
         int currentIndex = cache.currentIndex;
         if (currentIndex <= 0 || currentIndex - 1 >= cache.cacheSize) return;
 
-        String prev = cache.getCacheIndex(currentIndex - 1).getAbsolutePath();
+        String prev = cache.get(currentIndex - 1).getAbsolutePath();
         File file = new File(prev);
         if (!file.exists()) return;
         try {

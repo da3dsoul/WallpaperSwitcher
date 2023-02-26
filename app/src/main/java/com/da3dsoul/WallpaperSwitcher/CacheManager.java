@@ -15,7 +15,6 @@ import androidx.work.ForegroundInfo;
 import androidx.work.ListenableWorker;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.OutOfQuotaPolicy;
-import androidx.work.WorkInfo;
 import androidx.work.WorkManager;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
@@ -41,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 
 public class CacheManager {
     // region variables and init
+    public static final CacheProgress Progress = new CacheProgress();
     public static int baseBucketSize = 100;
     public static int cacheReadAhead = 50;
     private static final HashMap<String, CacheManager> _instances = new HashMap<>();
@@ -51,8 +51,8 @@ public class CacheManager {
     public int currentIndex = 0;
     public ArrayList<File> sourceDirectories = new ArrayList<>();
     public int bucketSize = baseBucketSize;
-    public final ArrayList<File> cache = new ArrayList<>(bucketSize);
     public int cacheSize;
+    private final ArrayList<File> cache = new ArrayList<>(bucketSize);
     private boolean isInitialized;
     private SharedPreferences sp;
 
@@ -107,52 +107,56 @@ public class CacheManager {
         sp = c.getSharedPreferences("wall", Context.MODE_PRIVATE);
 
         if (ParseSourceDirectories(sp)) return;
-
-        synchronized (cache) {
-            String data = sp.getString("cache", "");
-            if (!data.equals("")) {
-                try
-                {
-                    Gson gson = new Gson();
-                    Type collectionType = new TypeToken<HashMap<String,String[]>>(){}.getType();
-                    HashMap<String,String[]> files = gson.fromJson(data, collectionType);
-                    String key = getKey();
-                    if (files.containsKey(key)) {
-                        for (String item : Objects.requireNonNull(files.get(key))) {
-                            File file = new File(item);
-                            if (!file.isFile() || !file.exists()) continue;
-                            cache.add(file);
-                        }
+        String data = sp.getString("cache", "");
+        if (!data.equals("")) {
+            ArrayList<File> toAdd = new ArrayList<>();
+            try
+            {
+                Gson gson = new Gson();
+                Type collectionType = new TypeToken<HashMap<String,String[]>>(){}.getType();
+                HashMap<String,String[]> files = gson.fromJson(data, collectionType);
+                if (files == null) files = new HashMap<>();
+                String key = getKey();
+                if (files.containsKey(key)) {
+                    for (String item : Objects.requireNonNull(files.get(key))) {
+                        File file = new File(item);
+                        if (!file.isFile() || !file.exists()) continue;
+                        toAdd.add(file);
                     }
-                } catch (Exception e)
-                {
-                    // ignore
                 }
-            }
-
-            cacheSize = cache.size();
-            String key = getKey();
-            Gson gson = new Gson();
-            try {
-                Type collectionType = new TypeToken<HashMap<String, Integer>>() {}.getType();
-                HashMap<String,Integer> indexMap = gson.fromJson(sp.getString("currentIndexes", null), collectionType);
-                if (indexMap != null && indexMap.containsKey(key)) currentIndex = indexMap.get(key);
-                else currentIndex = 0;
             } catch (Exception e)
             {
-                currentIndex = 0;
+                // ignore
             }
 
-            baseBucketSize = Math.max(sp.getInt("bucketSize", baseBucketSize), 0);
-            bucketSize = baseBucketSize;
-            cacheReadAhead = Math.max(sp.getInt("readAhead", cacheReadAhead), 0);
-
-            queueCachePopulation(c);
-
-            if (currentIndex < cacheSize) {
-                path = cache.get(currentIndex).getAbsolutePath();
+            synchronized (cache) {
+                cache.addAll(toAdd);
+                cacheSize = cache.size();
             }
         }
+
+        String key = getKey();
+        Gson gson = new Gson();
+        try {
+            Type collectionType = new TypeToken<HashMap<String, Integer>>() {}.getType();
+            HashMap<String,Integer> indexMap = gson.fromJson(sp.getString("currentIndexes", null), collectionType);
+            if (indexMap != null && indexMap.containsKey(key)) currentIndex = indexMap.get(key);
+            else currentIndex = 0;
+        } catch (Exception e)
+        {
+            currentIndex = 0;
+        }
+
+        baseBucketSize = Math.max(sp.getInt("bucketSize", baseBucketSize), 0);
+        bucketSize = baseBucketSize;
+        cacheReadAhead = Math.max(sp.getInt("readAhead", cacheReadAhead), 0);
+
+        queueCachePopulation(c);
+
+        if (currentIndex < cacheSize) {
+            path = get(currentIndex).getAbsolutePath();
+        }
+
         isInitialized = true;
     }
 
@@ -161,6 +165,7 @@ public class CacheManager {
         if (directorySetting == null || directorySetting.equals("")) return true;
         Gson gson = new Gson();
         DirectoryModel[] directories = gson.fromJson(directorySetting, DirectoryModel[].class);
+        if (directories == null) directories = new DirectoryModel[0];
 
         for (DirectoryModel dir : directories) {
             if (Math.abs(dir.MinAspect - minAspect) > 0.001D) continue;
@@ -200,69 +205,81 @@ public class CacheManager {
 
     // region Cache Management
     public void populateCache() {
-        List<File> temp = new ArrayList<>(cache);
-        if (cacheSize > bucketSize) return;
-        if (cacheSize == bucketSize && currentIndex < cacheSize - cacheReadAhead) return;
+        try {
+            if (Progress.TotalFiles != 0 && Progress.AddedFiles != 0) return;
+            resetProgress();
 
-        ArrayList<File> files = new ArrayList<>();
-        for (File dir : sourceDirectories) {
-            recursivelyAddWallpapers(files, dir);
-        }
-        if (files.size() < bucketSize) bucketSize = files.size();
-        else if (bucketSize < baseBucketSize) {
-            files.size();
-            bucketSize = baseBucketSize;
-        }
+            if (cacheSize > bucketSize) return;
+            if (cacheSize == bucketSize && currentIndex < cacheSize - cacheReadAhead) return;
 
-        files.removeAll(temp);
+            List<File> temp;
+            synchronized (cache) {
+                temp = new ArrayList<>(cache);
+            }
 
-        if (files.size() <= 0) {
-            path = null;
-            currentIndex = 0;
-            cacheSize = 0;
-            return;
-        }
+            ArrayList<File> files = new ArrayList<>();
+            for (File dir : sourceDirectories) {
+                recursivelyAddWallpapers(files, dir);
+                synchronized (Progress) { Progress.AddedDirectories++; }
+            }
+            if (files.size() < bucketSize) bucketSize = files.size();
+            else if (bucketSize < baseBucketSize) {
+                files.size();
+                bucketSize = baseBucketSize;
+            }
 
-        synchronized (cache) {
-            HashMap<String,Long> seedMap;
+            files.removeAll(temp);
+
+            if (files.size() <= 0) {
+                path = null;
+                currentIndex = 0;
+                cacheSize = 0;
+                return;
+            }
+
+            HashMap<String, Long> seedMap;
             String key = getKey();
             Gson gson = new Gson();
             try {
-                Type collectionType = new TypeToken<HashMap<String,Long>>() {}.getType();
+                Type collectionType = new TypeToken<HashMap<String, Long>>() {
+                }.getType();
                 seedMap = gson.fromJson(sp.getString("seed", ""), collectionType);
-            } catch (Exception e)
-            {
+                if (seedMap == null) seedMap = new HashMap<>();
+            } catch (Exception e) {
                 seedMap = new HashMap<>();
             }
             long seed = seedMap.containsKey(key) ? seedMap.get(key) : -1;
             Random rand = seed != -1 ? new Random(seed) : new Random();
-
-            cache.addAll(pickNRandomElements(files, bucketSize, rand));
-            cacheSize = cache.size();
+            List<File> filesToAdd = pickNRandomElements(files, bucketSize, rand);
+            synchronized (cache) {
+                cache.addAll(filesToAdd);
+                cacheSize = cache.size();
+            }
 
             seedMap.put(key, getSeed(rand));
 
             SharedPreferences.Editor edit = sp.edit();
             edit.putString("seed", gson.toJson(seedMap));
 
-            HashMap<String,String[]> filesMap;
+            HashMap<String, String[]> filesMap;
             try {
-                Type collectionType = new TypeToken<HashMap<String, String[]>>() {}.getType();
+                Type collectionType = new TypeToken<HashMap<String, String[]>>() {
+                }.getType();
                 filesMap = gson.fromJson(sp.getString("cache", ""), collectionType);
-            } catch (Exception e)
-            {
+                if (filesMap == null) filesMap = new HashMap<>();
+            } catch (Exception e) {
                 filesMap = new HashMap<>();
             }
 
             if (cacheSize > 0) {
                 if (currentIndex < cacheSize)
-                    path = cache.get(currentIndex).getAbsolutePath();
+                    path = get(currentIndex).getAbsolutePath();
                 else
-                    path = cache.get(0).getAbsolutePath();
+                    path = get(0).getAbsolutePath();
 
                 String[] paths = new String[cacheSize];
                 for (int i = 0; i < cacheSize; i++) {
-                    paths[i] = cache.get(i).getAbsolutePath();
+                    paths[i] = get(i).getAbsolutePath();
                 }
 
                 filesMap.put(key, paths);
@@ -272,58 +289,68 @@ public class CacheManager {
                 edit.putString("cache", gson.toJson(filesMap));
             }
             edit.apply();
-        }
 
-        if (temp.size() <= 0) notifyListeners();
+            if (temp.size() <= 0) notifyListeners();
+        } finally {
+            resetProgress();
+        }
+    }
+
+    private void resetProgress() {
+        Progress.TotalFiles = sp.getInt("totalFiles", 0);
+        Progress.TotalDirectories = sourceDirectories.size();
+        Progress.PercentComplete = 0;
+        Progress.AddedDirectories = 0;
+        Progress.AddedFiles = 0;
     }
 
     private void cleanCache() {
+        if (cacheSize <= bucketSize || currentIndex < bucketSize) return;
         synchronized (cache) {
-            if (cacheSize <= bucketSize || currentIndex < bucketSize) return;
             int originalSize = cache.size();
             currentIndex -= bucketSize;
             cache.subList(0, originalSize - bucketSize).clear();
             cacheSize = cache.size();
-
-
-            SharedPreferences.Editor edit = sp.edit();
-            String[] paths = new String[cacheSize];
-            for (int i = 0; i < cacheSize; i++) {
-                paths[i] = cache.get(i).getAbsolutePath();
-            }
-
-            HashMap<String,String[]> filesMap;
-            HashMap<String,Integer> indexMap;
-            String key = getKey();
-            Gson gson = new Gson();
-            try {
-                Type collectionType = new TypeToken<HashMap<String, String[]>>() {}.getType();
-                filesMap = gson.fromJson(sp.getString("cache", ""), collectionType);
-            } catch (Exception e)
-            {
-                filesMap = new HashMap<>();
-            }
-
-            filesMap.put(key, paths);
-            edit.putString("cache", gson.toJson(filesMap));
-
-            try {
-                Type collectionType = new TypeToken<HashMap<String, Integer>>() {}.getType();
-                indexMap = gson.fromJson(sp.getString("currentIndexes", null), collectionType);
-                if (indexMap == null) indexMap = new HashMap<>();
-            } catch (Exception e)
-            {
-                indexMap = new HashMap<>();
-            }
-
-            indexMap.put(key, currentIndex);
-            edit.putString("currentIndexes", gson.toJson(indexMap));
-
-            edit.apply();
         }
+
+        SharedPreferences.Editor edit = sp.edit();
+        String[] paths = new String[cacheSize];
+        for (int i = 0; i < cacheSize; i++) {
+            paths[i] = get(i).getAbsolutePath();
+        }
+
+        HashMap<String,String[]> filesMap;
+        HashMap<String,Integer> indexMap;
+        String key = getKey();
+        Gson gson = new Gson();
+        try {
+            Type collectionType = new TypeToken<HashMap<String, String[]>>() {}.getType();
+            filesMap = gson.fromJson(sp.getString("cache", ""), collectionType);
+            if (filesMap == null) filesMap = new HashMap<>();
+        } catch (Exception e)
+        {
+            filesMap = new HashMap<>();
+        }
+
+        filesMap.put(key, paths);
+        edit.putString("cache", gson.toJson(filesMap));
+
+        try {
+            Type collectionType = new TypeToken<HashMap<String, Integer>>() {}.getType();
+            indexMap = gson.fromJson(sp.getString("currentIndexes", null), collectionType);
+            if (indexMap == null) indexMap = new HashMap<>();
+        } catch (Exception e)
+        {
+            indexMap = new HashMap<>();
+        }
+
+        indexMap.put(key, currentIndex);
+        edit.putString("currentIndexes", gson.toJson(indexMap));
+
+        edit.apply();
     }
 
-    public File getCacheIndex(int i)
+    public File get(int i)
     {
         if (cacheSize == 0 || i < 0 || i >= cacheSize) return null;
         synchronized (cache)
@@ -334,66 +361,59 @@ public class CacheManager {
     // endregion
 
     public void switchWallpaper(Context c) {
-        synchronized (cache) {
-            File currentFile;
-            do {
-                currentIndex++;
-            } while ((currentFile = getCacheIndex(currentIndex)) != null && currentFile.exists());
+        File currentFile;
+        do {
+            currentIndex++;
+        } while ((currentFile = get(currentIndex)) == null || !currentFile.exists());
 
-            if (cacheSize > 0) {
-                if (currentIndex >= cacheSize - cacheReadAhead) {
-                    // it's not done, so do it now
-                    if (currentIndex >= cacheSize) {
-                        waitForPopulation(c);
-                    }
-
-                    // if cache is not read ahead
-                    if (cacheSize < bucketSize * 2)
-                        queueCachePopulation(c);
-
-                    // cleanup cache
-                    if (currentIndex >= bucketSize + 5)
-                        queueCacheCleanup(c);
-
-                    path = cache.get(currentIndex).getAbsolutePath();
-                } else {
-                    path = cache.get(currentIndex).getAbsolutePath();
-                    if (cacheSize > bucketSize && currentIndex >= bucketSize)
-                        queueCacheCleanup(c);
+        if (cacheSize > 0) {
+            if (currentIndex >= cacheSize - cacheReadAhead) {
+                // it's not done, so do it now
+                if (currentIndex >= cacheSize) {
+                    waitForPopulation();
                 }
+
+                // if cache is not read ahead
+                if (cacheSize < bucketSize * 2)
+                    queueCachePopulation(c);
+
+                // cleanup cache
+                if (currentIndex >= bucketSize + 5)
+                    queueCacheCleanup(c);
+
+                path = currentFile.getAbsolutePath();
             } else {
-                // no cache, so do it now
-                waitForPopulation(c);
+                path = currentFile.getAbsolutePath();
+                if (cacheSize > bucketSize && currentIndex >= bucketSize)
+                    queueCacheCleanup(c);
             }
-
-            HashMap<String,Integer> indexMap;
-            String key = getKey();
-            Gson gson = new Gson();
-
-            try {
-                Type collectionType = new TypeToken<HashMap<String, Integer>>() {}.getType();
-                indexMap = gson.fromJson(sp.getString("currentIndexes", null), collectionType);
-                if (indexMap == null) indexMap = new HashMap<>();
-            } catch (Exception e)
-            {
-                indexMap = new HashMap<>();
-            }
-
-            indexMap.put(key, currentIndex);
-            sp.edit().putString("currentIndexes", gson.toJson(indexMap)).apply();
+        } else {
+            // no cache, so do it now
+            waitForPopulation();
         }
+
+        HashMap<String,Integer> indexMap;
+        String key = getKey();
+        Gson gson = new Gson();
+
+        try {
+            Type collectionType = new TypeToken<HashMap<String, Integer>>() {}.getType();
+            indexMap = gson.fromJson(sp.getString("currentIndexes", null), collectionType);
+            if (indexMap == null) indexMap = new HashMap<>();
+        } catch (Exception e)
+        {
+            indexMap = new HashMap<>();
+        }
+
+        indexMap.put(key, currentIndex);
+        sp.edit().putString("currentIndexes", gson.toJson(indexMap)).apply();
         notifyListeners();
     }
 
-    private void waitForPopulation(Context c) {
-        ListenableFuture<List<WorkInfo>> workInfos = WorkManager.getInstance(c).getWorkInfosForUniqueWork("WallpaperSwitcher.loadPapers");
+    private void waitForPopulation() {
         try {
-            List<WorkInfo> infos = workInfos.get();
-            if (infos.size() > 0)
-            {
-                while (!infos.get(0).getState().isFinished()) {
-                    Thread.sleep(50);
-                }
+            while (Progress.AddedFiles != 0 || Progress.TotalFiles != 0) {
+                Thread.sleep(50);
             }
         } catch (Exception e) {
             // ignore
@@ -409,8 +429,12 @@ public class CacheManager {
                 recursivelyAddWallpapers(files, item);
                 continue;
             }
+
             if (!isImage(item.getName())) continue;
             files.add(item);
+            Progress.AddedFiles++;
+            if (Progress.TotalFiles != 0) Progress.PercentComplete = (double)Progress.AddedFiles / Progress.TotalFiles;
+            if (Progress.AddedFiles % 20 == 1) notifyListeners();
         }
     }
 
@@ -532,6 +556,7 @@ public class CacheManager {
                     .setContentTitle(context.getString(R.string.app_name))
                     .setLocalOnly(true)
                     .setVisibility(Notification.VISIBILITY_PUBLIC)
+                    .setProgress(Progress.TotalFiles, Progress.AddedFiles, false)
                     .setContentText("Populating Cache")
                     .build();
             return CallbackToFutureAdapter.getFuture(completer -> {

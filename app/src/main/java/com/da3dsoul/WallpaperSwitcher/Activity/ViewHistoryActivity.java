@@ -49,7 +49,7 @@ public class ViewHistoryActivity  extends Activity {
             int index = cache.currentIndex;
             for (int i = index; i >= 0; i--)
             {
-                File file = cache.cache.get(i);
+                File file = cache.get(i);
                 if (!file.exists()) continue;
                 matches.add(file.getAbsolutePath());
             }
