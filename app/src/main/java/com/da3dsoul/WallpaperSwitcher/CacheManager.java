@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,7 +41,8 @@ import java.util.concurrent.TimeUnit;
 
 public class CacheManager {
     // region variables and init
-    public static final CacheProgress Progress = new CacheProgress();
+    public final CacheProgress Progress = new CacheProgress();
+    private int previousTotal;
     public static int baseBucketSize = 100;
     public static int cacheReadAhead = 50;
     private static final HashMap<String, CacheManager> _instances = new HashMap<>();
@@ -206,11 +208,24 @@ public class CacheManager {
     // region Cache Management
     public void populateCache() {
         try {
-            if (Progress.TotalFiles != 0 && Progress.AddedFiles != 0) return;
+            if (Progress.TotalFiles != 0 || Progress.AddedFiles != 0) return;
+            String key = getKey();
+            Gson gson = new Gson();
             resetProgress();
 
             if (cacheSize > bucketSize) return;
             if (cacheSize == bucketSize && currentIndex < cacheSize - cacheReadAhead) return;
+
+            HashMap<String, Integer> totalMap;
+            try {
+                Type collectionType = new TypeToken<HashMap<String, Integer>>() {
+                }.getType();
+                totalMap = gson.fromJson(sp.getString("totalFiles", ""), collectionType);
+                if (totalMap == null) totalMap = new HashMap<>();
+            } catch (Exception e) {
+                totalMap = new HashMap<>();
+            }
+            Progress.TotalFiles = totalMap.containsKey(key) ? totalMap.get(key) : 0;
 
             List<File> temp;
             synchronized (cache) {
@@ -224,7 +239,6 @@ public class CacheManager {
             }
             if (files.size() < bucketSize) bucketSize = files.size();
             else if (bucketSize < baseBucketSize) {
-                files.size();
                 bucketSize = baseBucketSize;
             }
 
@@ -238,8 +252,6 @@ public class CacheManager {
             }
 
             HashMap<String, Long> seedMap;
-            String key = getKey();
-            Gson gson = new Gson();
             try {
                 Type collectionType = new TypeToken<HashMap<String, Long>>() {
                 }.getType();
@@ -260,6 +272,10 @@ public class CacheManager {
 
             SharedPreferences.Editor edit = sp.edit();
             edit.putString("seed", gson.toJson(seedMap));
+
+            Progress.TotalFiles = files.size();
+            totalMap.put(key, files.size());
+            edit.putString("totalFiles", gson.toJson(totalMap));
 
             HashMap<String, String[]> filesMap;
             try {
@@ -297,7 +313,7 @@ public class CacheManager {
     }
 
     private void resetProgress() {
-        Progress.TotalFiles = sp.getInt("totalFiles", 0);
+        Progress.TotalFiles = 0;
         Progress.TotalDirectories = sourceDirectories.size();
         Progress.PercentComplete = 0;
         Progress.AddedDirectories = 0;
@@ -361,10 +377,10 @@ public class CacheManager {
     // endregion
 
     public void switchWallpaper(Context c) {
-        File currentFile;
+        File currentFile = null;
         do {
             currentIndex++;
-        } while ((currentFile = get(currentIndex)) == null || !currentFile.exists());
+        } while (currentIndex < cacheSize && ((currentFile = get(currentIndex)) == null || !currentFile.exists()));
 
         if (cacheSize > 0) {
             if (currentIndex >= cacheSize - cacheReadAhead) {
@@ -381,9 +397,9 @@ public class CacheManager {
                 if (currentIndex >= bucketSize + 5)
                     queueCacheCleanup(c);
 
-                path = currentFile.getAbsolutePath();
+                path = currentFile == null ? null : currentFile.getAbsolutePath();
             } else {
-                path = currentFile.getAbsolutePath();
+                path = currentFile == null ? null : currentFile.getAbsolutePath();
                 if (cacheSize > bucketSize && currentIndex >= bucketSize)
                     queueCacheCleanup(c);
             }
@@ -531,15 +547,19 @@ public class CacheManager {
         private final Context context;
         public CachePopulationWorker(@NonNull Context context, @NonNull WorkerParameters params) {
             super(context, params);
+
             this.context = context;
         }
 
         @Override
         @NonNull
         public Result doWork() {
-            for (CacheManager cache : _instances.values()) {
-                if (!cache.isInitialized) cache.init(context);
-                cache.populateCache();
+            double aspect = getInputData().getDouble("aspect", -1);
+            if (aspect == -1) {
+                for (CacheManager cache : _instances.values()) {
+                    if (!cache.isInitialized) cache.init(context);
+                    cache.populateCache();
+                }
             }
 
             // Indicate whether the work finished successfully with the Result
@@ -549,6 +569,8 @@ public class CacheManager {
         @NonNull
         @Override
         public ListenableFuture<ForegroundInfo> getForegroundInfoAsync() {
+            int total = Arrays.stream(CacheManager.allInstances()).map(a -> a.Progress.TotalFiles).reduce(0, Integer::sum);
+            int added = Arrays.stream(CacheManager.allInstances()).map(a -> a.Progress.AddedFiles).reduce(0, Integer::sum);
             Notification notification = new Notification.Builder(context, "WallpaperSwitcher")
                     .setSmallIcon(R.drawable.icon)
                     .setOngoing(true)
@@ -556,7 +578,7 @@ public class CacheManager {
                     .setContentTitle(context.getString(R.string.app_name))
                     .setLocalOnly(true)
                     .setVisibility(Notification.VISIBILITY_PUBLIC)
-                    .setProgress(Progress.TotalFiles, Progress.AddedFiles, false)
+                    .setProgress(total, added, false)
                     .setContentText("Populating Cache")
                     .build();
             return CallbackToFutureAdapter.getFuture(completer -> {

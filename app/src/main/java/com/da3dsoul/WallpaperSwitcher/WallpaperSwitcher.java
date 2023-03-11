@@ -120,18 +120,19 @@ public class WallpaperSwitcher extends WallpaperService {
 
             if (cache == null) cache = CacheManager.instanceForCanvas((double)c.getWidth() / c.getHeight());
             if (cache == null || cache.needsInitialized()) return;
+            int height = c.getHeight();
+            int width = c.getWidth();
+            Paint black = new Paint();
+            black.setARGB(255, 0, 0, 0);
+            c.drawRect(0, 0, width, height, black);
+
             String path = cache.path;
             if (path != null && !path.equals("")) paper = BitmapFactory.decodeFile(path);
             if (paper != null) {
-                int height = c.getHeight();
-                int width = c.getWidth();
-                Paint black = new Paint();
-                black.setARGB(255, 0, 0, 0);
-                c.drawRect(0, 0, width, height, black);
                 double ar = (double) paper.getWidth() / paper.getHeight();
                 Bitmap output = Bitmap.createScaledBitmap(paper, width, (int) Math.round(width / ar), true);
                 c.drawBitmap(output, 0, (int) Math.floor(height / 2D - output.getHeight() / 2D), null);
-            } else if (CacheManager.Progress.TotalFiles != 0 || CacheManager.Progress.AddedFiles != 0)
+            } else if (cache.Progress.TotalFiles != 0 || cache.Progress.AddedFiles != 0)
             {
                 Paint white = new Paint();
                 white.setARGB(255, 255, 255, 255);
@@ -146,9 +147,9 @@ public class WallpaperSwitcher extends WallpaperService {
                 int x = (int) Math.floor(c.getWidth() / 2D);
                 c.drawText("Building Cache", x, y, white);
                 y += fontSize + buffer;
-                c.drawText(String.format(Locale.ENGLISH, "%.1f%%", CacheManager.Progress.PercentComplete), x, y, white);
+                c.drawText(String.format(Locale.ENGLISH, "%.1f%%", cache.Progress.PercentComplete * 100), x, y, white);
                 y += fontSize + buffer;
-                c.drawText(String.format(Locale.ENGLISH, "%s/%s", CacheManager.Progress.AddedFiles, CacheManager.Progress.TotalFiles), x, y, white);
+                c.drawText(String.format(Locale.ENGLISH, "%s/%s", cache.Progress.AddedFiles, cache.Progress.TotalFiles), x, y, white);
             }
 
             if (sp.getBoolean("debug_stats", false)) {
