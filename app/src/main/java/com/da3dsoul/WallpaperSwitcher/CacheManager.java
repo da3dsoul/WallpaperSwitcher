@@ -156,7 +156,8 @@ public class CacheManager {
         queueCachePopulation(c);
 
         if (currentIndex < cacheSize) {
-            path = get(currentIndex).getAbsolutePath();
+            File file = get(currentIndex);
+            path = file == null ? null : file.getAbsolutePath();
         }
 
         isInitialized = true;
@@ -287,6 +288,7 @@ public class CacheManager {
                 filesMap = new HashMap<>();
             }
 
+            // get(validIndex) should never be null here, as we just built the cache
             if (cacheSize > 0) {
                 if (currentIndex < cacheSize)
                     path = get(currentIndex).getAbsolutePath();
@@ -405,6 +407,7 @@ public class CacheManager {
             }
         } else {
             // no cache, so do it now
+            queueCachePopulation(c);
             waitForPopulation();
         }
 
@@ -541,6 +544,21 @@ public class CacheManager {
                 .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
                 .setBackoffCriteria(BackoffPolicy.LINEAR, OneTimeWorkRequest.MIN_BACKOFF_MILLIS, TimeUnit.MILLISECONDS)
                 .build();
+    }
+
+    public long getSeed() {
+        String key = getKey();
+        Gson gson = new Gson();
+        HashMap<String, Long> seedMap;
+        try {
+            Type collectionType = new TypeToken<HashMap<String, Long>>() {
+            }.getType();
+            seedMap = gson.fromJson(sp.getString("seed", ""), collectionType);
+            if (seedMap == null) seedMap = new HashMap<>();
+        } catch (Exception e) {
+            seedMap = new HashMap<>();
+        }
+        return seedMap.containsKey(key) ? seedMap.get(key) : 0;
     }
 
     public static class CachePopulationWorker extends Worker {

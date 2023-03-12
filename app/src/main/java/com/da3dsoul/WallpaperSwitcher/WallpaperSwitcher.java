@@ -159,7 +159,14 @@ public class WallpaperSwitcher extends WallpaperService {
                 int fontSize = 24;
                 int buffer = 8;
                 white.setTextSize(fontSize);
-                int y = 100;
+                int y = 112;
+                // debug box
+                int lines = 6;
+                int debugBoxHeight = lines * (fontSize + buffer) + y + 30;
+                Paint gray = new Paint();
+                gray.setARGB(191, 0, 0, 0);
+                c.drawRect(0,0, c.getWidth(), debugBoxHeight, gray);
+                // debug lines
                 c.drawText("Path: " + path, 10, y, white);
                 y += fontSize + buffer;
                 c.drawText("CurrentIndex: " + cache.currentIndex +
@@ -168,7 +175,7 @@ public class WallpaperSwitcher extends WallpaperService {
                 c.drawText("bucketSize: " + cache.bucketSize + "   baseBucketSize: "
                         + CacheManager.baseBucketSize, 10, y, white);
                 y += fontSize + buffer;
-                c.drawText("ReadAhead: " + CacheManager.cacheReadAhead + "   BucketSeed: " + sp.getLong("seed", 0), 10, y, white);
+                c.drawText("ReadAhead: " + CacheManager.cacheReadAhead + "   BucketSeed: " + cache.getSeed(), 10, y, white);
                 y += fontSize + buffer;
                 c.drawText("Canvas Width: " + c.getWidth() + "   Canvas Height: " + c.getHeight(), 10, y, white);
                 y += fontSize + buffer;
