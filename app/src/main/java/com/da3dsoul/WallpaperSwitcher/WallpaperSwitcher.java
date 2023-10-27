@@ -14,6 +14,7 @@ import android.os.Build;
 import android.service.wallpaper.WallpaperService;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.Display;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
@@ -49,12 +50,17 @@ public class WallpaperSwitcher extends WallpaperService {
                             //The screen on position
                             DisplayMetrics metrics = new DisplayMetrics();
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                getDisplayContext().getDisplay().getRealMetrics(metrics);
+                                Display display = context.getDisplay();
+                                if (display == null) {
+                                    Log.e("WallpaperSwitcher", "Could could not get display");
+                                    return;
+                                }
+                                display.getRealMetrics(metrics);
                             }
 
                             if (metrics.widthPixels == 0 || metrics.heightPixels == 0) return;
                             double aspect = (double) metrics.widthPixels / metrics.heightPixels;
-                            CacheManager cache = CacheManager.instanceForCanvas(aspect);
+                            ICacheManager cache = CacheInstanceManager.instanceForCanvas(aspect);
                             if (cache == null || cache.needsInitialized()) return;
                             cache.switchWallpaper(context);
                         } catch (Exception e)
@@ -73,7 +79,7 @@ public class WallpaperSwitcher extends WallpaperService {
             Gson gson = new Gson();
             DirectoryModel[] directories = gson.fromJson(directorySetting, DirectoryModel[].class);
             for (DirectoryModel model : directories) {
-                CacheManager cache = CacheManager.instance(model.MinAspect, model.MaxAspect);
+                ICacheManager cache = CacheInstanceManager.instance(model.MinAspect, model.MaxAspect);
                 cache.init(getApplicationContext());
                 cache.subscribe(this);
             }
@@ -83,7 +89,7 @@ public class WallpaperSwitcher extends WallpaperService {
         public void onDestroy() {
             super.onDestroy();
             unregisterReceiver(screenEventReceiver);
-            for (CacheManager cache : CacheManager.allInstances()) {
+            for (ICacheManager cache : CacheInstanceManager.allInstances()) {
                 cache.unsubscribe(this);
             }
 
@@ -94,7 +100,7 @@ public class WallpaperSwitcher extends WallpaperService {
             drawFrame(null, (SurfaceHolder) null);
         }
 
-        private void drawFrame(CacheManager cache, SurfaceHolder holder) {
+        private void drawFrame(ICacheManager cache, SurfaceHolder holder) {
             if (noDraw) return;
             if (holder == null) holder = getSurfaceHolder();
             if (!holder.getSurface().isValid()) return;
@@ -115,10 +121,10 @@ public class WallpaperSwitcher extends WallpaperService {
             }
         }
 
-        private void drawFrame(CacheManager cache, Canvas c) {
+        private void drawFrame(ICacheManager cache, Canvas c) {
             Bitmap paper = null;
 
-            if (cache == null) cache = CacheManager.instanceForCanvas((double)c.getWidth() / c.getHeight());
+            if (cache == null) cache = CacheInstanceManager.instanceForCanvas((double)c.getWidth() / c.getHeight());
             if (cache == null || cache.needsInitialized()) return;
             int height = c.getHeight();
             int width = c.getWidth();
@@ -126,13 +132,13 @@ public class WallpaperSwitcher extends WallpaperService {
             black.setARGB(255, 0, 0, 0);
             c.drawRect(0, 0, width, height, black);
 
-            String path = cache.path;
+            String path = cache.getCurrentPath();
             if (path != null && !path.equals("")) paper = BitmapFactory.decodeFile(path);
             if (paper != null) {
                 double ar = (double) paper.getWidth() / paper.getHeight();
                 Bitmap output = Bitmap.createScaledBitmap(paper, width, (int) Math.round(width / ar), true);
                 c.drawBitmap(output, 0, (int) Math.floor(height / 2D - output.getHeight() / 2D), null);
-            } else if (cache.Progress.TotalFiles != 0 || cache.Progress.AddedFiles != 0)
+            } else if (cache.getProgress().TotalFiles != 0 || cache.getProgress().AddedFiles != 0)
             {
                 Paint white = new Paint();
                 white.setARGB(255, 255, 255, 255);
@@ -147,39 +153,13 @@ public class WallpaperSwitcher extends WallpaperService {
                 int x = (int) Math.floor(c.getWidth() / 2D);
                 c.drawText("Building Cache", x, y, white);
                 y += fontSize + buffer;
-                c.drawText(String.format(Locale.ENGLISH, "%.1f%%", cache.Progress.PercentComplete * 100), x, y, white);
+                c.drawText(String.format(Locale.ENGLISH, "%.1f%%", cache.getProgress().PercentComplete * 100), x, y, white);
                 y += fontSize + buffer;
-                c.drawText(String.format(Locale.ENGLISH, "%s/%s", cache.Progress.AddedFiles, cache.Progress.TotalFiles), x, y, white);
+                c.drawText(String.format(Locale.ENGLISH, "%s/%s", cache.getProgress().AddedFiles, cache.getProgress().TotalFiles), x, y, white);
             }
 
             if (sp.getBoolean("debug_stats", false)) {
-                Paint white = new Paint();
-                white.setARGB(255, 255, 255, 255);
-                white.setShadowLayer(4, 2, 2, 0);
-                int fontSize = 24;
-                int buffer = 8;
-                white.setTextSize(fontSize);
-                int y = 112;
-                // debug box
-                int lines = 6;
-                int debugBoxHeight = lines * (fontSize + buffer) + y + 30;
-                Paint gray = new Paint();
-                gray.setARGB(191, 0, 0, 0);
-                c.drawRect(0,0, c.getWidth(), debugBoxHeight, gray);
-                // debug lines
-                c.drawText("Path: " + path, 10, y, white);
-                y += fontSize + buffer;
-                c.drawText("CurrentIndex: " + cache.currentIndex +
-                        "   Cache Size: " + cache.cacheSize, 10, y, white);
-                y += fontSize + buffer;
-                c.drawText("bucketSize: " + cache.bucketSize + "   baseBucketSize: "
-                        + CacheManager.baseBucketSize, 10, y, white);
-                y += fontSize + buffer;
-                c.drawText("ReadAhead: " + CacheManager.cacheReadAhead + "   BucketSeed: " + cache.getSeed(), 10, y, white);
-                y += fontSize + buffer;
-                c.drawText("Canvas Width: " + c.getWidth() + "   Canvas Height: " + c.getHeight(), 10, y, white);
-                y += fontSize + buffer;
-                c.drawText("Cache minAspect: " + cache.minAspect + "   Cache maxAspect: " + cache.maxAspect + "   Aspect: " + (double)c.getWidth() / c.getHeight(), 10, y, white);
+                cache.drawDebugStats(c);
             }
         }
 
@@ -198,11 +178,8 @@ public class WallpaperSwitcher extends WallpaperService {
 
         public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
             if (key == null || key.equals("directories")) {
-                for (CacheManager cache : CacheManager.allInstances()) {
-                    cache.sourceDirectories.clear();
-                    cache.ParseSourceDirectories(sharedPreferences);
-                    if (cache.sourceDirectories.size() > 0)
-                        cache.queueCacheRebuild(getApplicationContext());
+                for (ICacheManager cache : CacheInstanceManager.allInstances()) {
+                    cache.onSharedPreferencesChanged(sharedPreferences, getApplicationContext());
                 }
 
                 drawFrame();
@@ -231,7 +208,7 @@ public class WallpaperSwitcher extends WallpaperService {
         }
 
         @Override
-        public void WallpaperChanged(CacheManager cache) {
+        public void WallpaperChanged(ICacheManager cache) {
             drawFrame(cache, (SurfaceHolder)null);
         }
 

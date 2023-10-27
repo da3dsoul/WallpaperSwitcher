@@ -8,7 +8,8 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
-import com.da3dsoul.WallpaperSwitcher.CacheManager;
+import com.da3dsoul.WallpaperSwitcher.CacheInstanceManager;
+import com.da3dsoul.WallpaperSwitcher.ICacheManager;
 
 import java.io.File;
 
@@ -28,21 +29,19 @@ public class OpenPreviousWallpaperActivity extends Activity {
         }
 
         double aspect = (double)metrics.widthPixels/metrics.heightPixels;
-        CacheManager cache = CacheManager.instanceForCanvas(aspect);
+        ICacheManager cache = CacheInstanceManager.instanceForCanvas(aspect);
         if (cache == null || cache.needsInitialized()) {
             finish();
             return;
         }
 
-        int currentIndex = cache.currentIndex;
-        if (currentIndex <= 0 || currentIndex - 1 >= cache.cacheSize) return;
+        int currentIndex = cache.getCurrentIndex();
+        File previousFile = cache.get(currentIndex - 1);
+        if (previousFile == null || !previousFile.exists()) return;
 
-        String prev = cache.get(currentIndex - 1).getAbsolutePath();
-        File file = new File(prev);
-        if (!file.exists()) return;
         try {
             Intent openIntent = new Intent(Intent.ACTION_VIEW);
-            openIntent.setDataAndType(Uri.parse(file.getAbsolutePath()), "image/*");
+            openIntent.setDataAndType(Uri.parse(previousFile.getAbsolutePath()), "image/*");
             openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(openIntent);
         } catch (Exception e) {

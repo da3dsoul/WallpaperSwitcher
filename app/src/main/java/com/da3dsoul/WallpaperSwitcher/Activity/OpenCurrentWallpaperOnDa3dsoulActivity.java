@@ -8,7 +8,8 @@ import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
-import com.da3dsoul.WallpaperSwitcher.CacheManager;
+import com.da3dsoul.WallpaperSwitcher.CacheInstanceManager;
+import com.da3dsoul.WallpaperSwitcher.ICacheManager;
 
 import java.io.File;
 import java.util.regex.Matcher;
@@ -31,13 +32,13 @@ public class OpenCurrentWallpaperOnDa3dsoulActivity extends Activity {
         }
 
         double aspect = (double)metrics.widthPixels/metrics.heightPixels;
-        CacheManager cache = CacheManager.instanceForCanvas(aspect);
+        ICacheManager cache = CacheInstanceManager.instanceForCanvas(aspect);
         if (cache == null || cache.needsInitialized()) {
             finish();
             return;
         }
 
-        String path = cache.path;
+        String path = cache.getCurrentPath();
         File file = new File(path);
         if (!file.exists()) return;
         try {

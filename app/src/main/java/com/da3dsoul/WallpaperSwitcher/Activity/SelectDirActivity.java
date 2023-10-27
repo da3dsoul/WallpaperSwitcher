@@ -1,23 +1,22 @@
 package com.da3dsoul.WallpaperSwitcher.Activity;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-
 import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
+import android.widget.Button;
 
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
-import android.os.Environment;
-import android.widget.Button;
-
 import com.da3dsoul.WallpaperSwitcher.InputFileListAdapter;
 import com.da3dsoul.WallpaperSwitcher.InputFileListItem;
 import com.da3dsoul.WallpaperSwitcher.R;
+
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SelectDirActivity extends Activity {
 

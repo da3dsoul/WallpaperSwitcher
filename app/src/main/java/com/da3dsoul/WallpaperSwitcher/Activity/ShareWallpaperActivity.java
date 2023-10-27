@@ -11,7 +11,8 @@ import android.util.Log;
 import androidx.core.content.FileProvider;
 
 import com.da3dsoul.WallpaperSwitcher.BuildConfig;
-import com.da3dsoul.WallpaperSwitcher.CacheManager;
+import com.da3dsoul.WallpaperSwitcher.CacheInstanceManager;
+import com.da3dsoul.WallpaperSwitcher.ICacheManager;
 
 import java.io.File;
 
@@ -30,10 +31,10 @@ public class ShareWallpaperActivity extends Activity {
             if (metrics.widthPixels == 0 || metrics.heightPixels == 0) return;
 
             double aspect = (double) metrics.widthPixels / metrics.heightPixels;
-            CacheManager cache = CacheManager.instanceForCanvas(aspect);
+            ICacheManager cache = CacheInstanceManager.instanceForCanvas(aspect);
             if (cache == null || cache.needsInitialized()) return;
 
-            String path = cache.path;
+            String path = cache.getCurrentPath();
             if (path == null || path.equals("")) return;
             File file = new File(path);
             if (!file.exists()) return;

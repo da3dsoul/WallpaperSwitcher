@@ -10,8 +10,9 @@ import android.widget.TextView;
 
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.da3dsoul.WallpaperSwitcher.CacheManager;
+import com.da3dsoul.WallpaperSwitcher.CacheInstanceManager;
 import com.da3dsoul.WallpaperSwitcher.HistoryRecyclerViewAdapter;
+import com.da3dsoul.WallpaperSwitcher.ICacheManager;
 import com.da3dsoul.WallpaperSwitcher.R;
 
 import java.io.File;
@@ -34,7 +35,7 @@ public class ViewHistoryActivity  extends Activity {
         }
 
         double aspect = (double)metrics.widthPixels/metrics.heightPixels;
-        CacheManager cache = CacheManager.instanceForCanvas(aspect);
+        ICacheManager cache = CacheInstanceManager.instanceForCanvas(aspect);
         if (cache == null || cache.needsInitialized()) {
             finish();
             return;
@@ -46,11 +47,11 @@ public class ViewHistoryActivity  extends Activity {
             RecyclerView recyclerView = findViewById(R.id.history_list);
 
             ArrayList<String> matches = new ArrayList<>();
-            int index = cache.currentIndex;
+            int index = cache.getCurrentIndex();
             for (int i = index; i >= 0; i--)
             {
                 File file = cache.get(i);
-                if (!file.exists()) continue;
+                if (file == null || !file.exists()) continue;
                 matches.add(file.getAbsolutePath());
             }
 

@@ -14,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.da3dsoul.WallpaperSwitcher.Activity.AddDirectoryActivity;
-import com.da3dsoul.WallpaperSwitcher.Activity.SettingsActivity;
 
 import java.util.List;
 

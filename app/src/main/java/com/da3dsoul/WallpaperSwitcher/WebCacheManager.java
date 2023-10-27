@@ -40,7 +40,7 @@ import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
-public class CacheManager implements ICacheManager {
+public class WebCacheManager implements ICacheManager {
     // region variables and init
     private final CacheProgress progress = new CacheProgress();
     public CacheProgress getProgress() { return progress; }
@@ -61,7 +61,7 @@ public class CacheManager implements ICacheManager {
     private boolean isInitialized;
     private SharedPreferences sp;
 
-    public CacheManager(double minAspect, double maxAspect) {
+    public WebCacheManager(double minAspect, double maxAspect) {
         this.minAspect = minAspect;
         this.maxAspect = maxAspect;
     }

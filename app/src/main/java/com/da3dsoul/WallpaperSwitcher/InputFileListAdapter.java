@@ -1,8 +1,5 @@
 package com.da3dsoul.WallpaperSwitcher;
 
-import java.io.File;
-import java.util.List;
-
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +11,9 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.da3dsoul.WallpaperSwitcher.Activity.SelectDirActivity;
+
+import java.io.File;
+import java.util.List;
 
 public class InputFileListAdapter extends RecyclerView.Adapter<InputFileListAdapter.ViewHolder> {
     private final List<InputFileListItem> mList;

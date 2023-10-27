@@ -16,8 +16,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.da3dsoul.WallpaperSwitcher.AddDirectoryRecyclerViewAdapter;
-import com.da3dsoul.WallpaperSwitcher.CacheManager;
+import com.da3dsoul.WallpaperSwitcher.CacheInstanceManager;
 import com.da3dsoul.WallpaperSwitcher.DirectoryModel;
+import com.da3dsoul.WallpaperSwitcher.ICacheManager;
 import com.da3dsoul.WallpaperSwitcher.R;
 import com.google.gson.Gson;
 
@@ -37,12 +38,12 @@ public class SettingsActivity extends AppCompatActivity {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
         final SharedPreferences sp = getSharedPreferences("wall", MODE_PRIVATE);
-        int bucketSize = sp.getInt("bucketSize", CacheManager.baseBucketSize);
-        int readAhead = sp.getInt("readAhead", CacheManager.cacheReadAhead);
+        int bucketSize = sp.getInt("bucketSize", CacheInstanceManager.baseBucketSize);
+        int readAhead = sp.getInt("readAhead", CacheInstanceManager.cacheReadAhead);
         if (bucketSize == 0 || readAhead == 0) {
             SharedPreferences.Editor edit = sp.edit();
-            edit.putInt("bucketSize", CacheManager.baseBucketSize);
-            edit.putInt("readAhead", CacheManager.cacheReadAhead);
+            edit.putInt("bucketSize", CacheInstanceManager.baseBucketSize);
+            edit.putInt("readAhead", CacheInstanceManager.cacheReadAhead);
             edit.apply();
         }
 
@@ -55,10 +56,10 @@ public class SettingsActivity extends AppCompatActivity {
         txtBucketSize.setValue(bucketSize);
         txtBucketSize.setOnValueChangedListener((l, previous, current) -> {
             if (current <= 0) return;
-            CacheManager.baseBucketSize = current;
-            for (CacheManager cache : CacheManager.allInstances()) {
-                if (cache.bucketSize != CacheManager.baseBucketSize) continue;
-                cache.bucketSize = current;
+            CacheInstanceManager.baseBucketSize = current;
+            for (ICacheManager cache : CacheInstanceManager.allInstances()) {
+                if (cache.getBucketSize() != CacheInstanceManager.baseBucketSize) continue;
+                cache.setBucketSize(current);
             }
 
             sp.edit().putInt("bucketSize", current).apply();
@@ -69,7 +70,7 @@ public class SettingsActivity extends AppCompatActivity {
         txtReadAhead.setValue(readAhead);
         txtReadAhead.setOnValueChangedListener((l, previous, current) -> {
             if (current <= 0) return;
-            CacheManager.cacheReadAhead = current;
+            CacheInstanceManager.cacheReadAhead = current;
             sp.edit().putInt("readAhead", current).apply();
         });
 
