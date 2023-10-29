@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:shortcutId="settings"
+        android:enabled="true"
+        android:icon="@drawable/image"
+        android:shortcutShortLabel="@string/shortcut_settings"
+        android:shortcutLongLabel="@string/shortcut_settings"
+        android:shortcutDisabledMessage="@string/shortcut_disabled">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.da3dsoul.WallpaperSwitcher"
+            android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.SettingsActivity" />
+        <!--<categories android:name="android.shortcut.conversation" />
+        <capability-binding android:key="actions.intent.CREATE_MESSAGE" />-->
+    </shortcut>
+    <shortcut
+        android:shortcutId="switch"
+        android:enabled="true"
+        android:icon="@drawable/image"
+        android:shortcutShortLabel="@string/shortcut_switch"
+        android:shortcutLongLabel="@string/shortcut_switch"
+        android:shortcutDisabledMessage="@string/shortcut_disabled">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.da3dsoul.WallpaperSwitcher"
+            android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.SwitchWallpaperActivity" />
+        <!--<categories android:name="android.shortcut.conversation" />
+        <capability-binding android:key="actions.intent.CREATE_MESSAGE" />-->
+    </shortcut>
+    <shortcut
+        android:shortcutId="share"
+        android:enabled="true"
+        android:icon="@drawable/image"
+        android:shortcutShortLabel="@string/shortcut_share"
+        android:shortcutLongLabel="@string/shortcut_share"
+        android:shortcutDisabledMessage="@string/shortcut_disabled">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.da3dsoul.WallpaperSwitcher"
+            android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.ShareWallpaperActivity" />
+        <!--<categories android:name="android.shortcut.conversation" />
+        <capability-binding android:key="actions.intent.CREATE_MESSAGE" />-->
+    </shortcut>
+    <shortcut
+        android:shortcutId="open_current"
+        android:enabled="true"
+        android:icon="@drawable/image"
+        android:shortcutShortLabel="@string/shortcut_open_current"
+        android:shortcutLongLabel="@string/shortcut_open_current"
+        android:shortcutDisabledMessage="@string/shortcut_disabled">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.da3dsoul.WallpaperSwitcher"
+            android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.OpenCurrentWallpaperActivity" />
+        <!--<categories android:name="android.shortcut.conversation" />
+        <capability-binding android:key="actions.intent.CREATE_MESSAGE" />-->
+    </shortcut>
+    <shortcut
+        android:shortcutId="open_current_da3dsoul"
+        android:enabled="true"
+        android:icon="@drawable/image"
+        android:shortcutShortLabel="@string/shortcut_open_current_da3dsoul"
+        android:shortcutLongLabel="@string/shortcut_open_current_da3dsoul"
+        android:shortcutDisabledMessage="@string/shortcut_disabled">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.da3dsoul.WallpaperSwitcher"
+            android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.OpenCurrentWallpaperOnDa3dsoulActivity" />
+        <!--<categories android:name="android.shortcut.conversation" />
+        <capability-binding android:key="actions.intent.CREATE_MESSAGE" />-->
+    </shortcut>
+    <shortcut
+        android:shortcutId="open_current_pixiv"
+        android:enabled="true"
+        android:icon="@drawable/image"
+        android:shortcutShortLabel="@string/shortcut_open_current_pixiv"
+        android:shortcutLongLabel="@string/shortcut_open_current_pixiv"
+        android:shortcutDisabledMessage="@string/shortcut_disabled">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.da3dsoul.WallpaperSwitcher"
+            android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.OpenCurrentWallpaperOnPixivActivity" />
+        <!--<categories android:name="android.shortcut.conversation" />
+        <capability-binding android:key="actions.intent.CREATE_MESSAGE" />-->
+    </shortcut>
+    <shortcut
+        android:shortcutId="open_previous"
+        android:enabled="true"
+        android:icon="@drawable/image"
+        android:shortcutShortLabel="@string/shortcut_open_previous"
+        android:shortcutLongLabel="@string/shortcut_open_previous"
+        android:shortcutDisabledMessage="@string/shortcut_disabled">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.da3dsoul.WallpaperSwitcher"
+            android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.OpenPreviousWallpaperActivity" />
+        <!--<categories android:name="android.shortcut.conversation" />
+        <capability-binding android:key="actions.intent.CREATE_MESSAGE" />-->
+    </shortcut>
+</shortcuts>

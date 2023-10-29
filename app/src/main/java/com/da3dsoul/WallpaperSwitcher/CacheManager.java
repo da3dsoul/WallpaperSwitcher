@@ -215,7 +215,7 @@ public class CacheManager implements ICacheManager {
             for (String dir : sourceDirectories) {
                 if (dir == null || dir.equals("")) continue;
                 File dirFile = new File(dir);
-                if (dirFile.exists()) continue;
+                if (!dirFile.exists()) continue;
                 recursivelyAddWallpapers(files, dirFile);
                 synchronized (progress) { progress.AddedDirectories++; }
             }
@@ -226,7 +226,7 @@ public class CacheManager implements ICacheManager {
 
             files.removeAll(temp);
 
-            if (files.size() <= 0) {
+            if (files.size() == 0) {
                 path = null;
                 currentIndex = 0;
                 cacheSize = 0;

@@ -56,6 +56,8 @@ public class WallpaperSwitcher extends WallpaperService {
                                     return;
                                 }
                                 display.getRealMetrics(metrics);
+                            } else {
+                                metrics = context.getResources().getDisplayMetrics();
                             }
 
                             if (metrics.widthPixels == 0 || metrics.heightPixels == 0) return;

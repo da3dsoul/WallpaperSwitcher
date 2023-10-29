@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_constraintVertical_weight=".75"
+    app:layout_constraintHorizontal_weight=".75"
+    tools:context="com.da3dsoul.WallpaperSwitcher.Activity.ViewHistoryActivity">
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent" android:layout_height="match_parent"
+        app:cardCornerRadius="16dp" style="@style/Theme.Black" >
+        <GridLayout android:rowCount="2" android:columnCount="1" android:layout_width="wrap_content" android:layout_height="wrap_content">
+            <TextView android:layout_margin="8dp" android:layout_row="0" android:layout_column="0"
+                android:layout_gravity="center_horizontal"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Body1"
+                android:textSize="24sp" android:text="@string/app_name" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:layout_row="1" android:layout_column="0"
+                android:id="@+id/main_activity_list"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="16dp"
+                android:layout_marginRight="16dp"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+                tools:listitem="@layout/main_activity_listitem" />
+        </GridLayout>
+    </com.google.android.material.card.MaterialCardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

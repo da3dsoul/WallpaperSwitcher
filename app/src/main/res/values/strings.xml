@@ -8,6 +8,16 @@
     <string name="please_select">Select Directory</string>
     <string name="title_activity_settings">Settings</string>
 
+    <!-- Shortcuts -->
+    <string name="shortcut_disabled">Disabled</string>
+    <string name="shortcut_settings">Settings</string>
+    <string name="shortcut_switch">Switch Wallpaper</string>
+    <string name="shortcut_share">Share Wallpaper</string>
+    <string name="shortcut_open_current">Open Current Wallpaper</string>
+    <string name="shortcut_open_current_da3dsoul">Open Current Wallpaper on da3dsoul.dev</string>
+    <string name="shortcut_open_current_pixiv">Open Current Wallpaper on Pixiv</string>
+    <string name="shortcut_open_previous">Open Previous Wallpaper</string>
+
     <!-- Preference Titles -->
 
     <!-- Messages Preferences -->
