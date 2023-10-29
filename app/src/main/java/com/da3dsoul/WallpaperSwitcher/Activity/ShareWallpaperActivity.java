@@ -13,6 +13,7 @@ import androidx.core.content.FileProvider;
 import com.da3dsoul.WallpaperSwitcher.BuildConfig;
 import com.da3dsoul.WallpaperSwitcher.CacheInstanceManager;
 import com.da3dsoul.WallpaperSwitcher.ICacheManager;
+import com.da3dsoul.WallpaperSwitcher.WallpaperSwitcher;
 
 import java.io.File;
 
@@ -23,12 +24,12 @@ public class ShareWallpaperActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         try {
-            DisplayMetrics metrics = new DisplayMetrics();
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                getDisplay().getRealMetrics(metrics);
-            }
+            DisplayMetrics metrics = WallpaperSwitcher.getDisplayMetrics(this);
 
-            if (metrics.widthPixels == 0 || metrics.heightPixels == 0) return;
+            if (metrics == null) {
+                finish();
+                return;
+            }
 
             double aspect = (double) metrics.widthPixels / metrics.heightPixels;
             ICacheManager cache = CacheInstanceManager.instanceForCanvas(aspect);

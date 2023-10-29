@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     app:layout_constraintVertical_weight=".75"
     app:layout_constraintHorizontal_weight=".75"
-    tools:context="com.da3dsoul.WallpaperSwitcher.Activity.ViewHistoryActivity">
+    tools:context="com.da3dsoul.WallpaperSwitcher.Activity.MainActivity">
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent" android:layout_height="match_parent"
         app:cardCornerRadius="16dp" style="@style/Theme.Black" >

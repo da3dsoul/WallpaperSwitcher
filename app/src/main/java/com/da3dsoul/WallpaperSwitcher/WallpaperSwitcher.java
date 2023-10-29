@@ -18,6 +18,8 @@ import android.view.Display;
 import android.view.Surface;
 import android.view.SurfaceHolder;
 
+import androidx.annotation.Nullable;
+
 import com.google.gson.Gson;
 
 import java.util.Locale;
@@ -45,35 +47,31 @@ public class WallpaperSwitcher extends WallpaperService {
                 @Override
                 public void onReceive(Context context, Intent intent) {
                     if (intent.getAction() == null) return;
-                    if (intent.getAction().equals(Intent.ACTION_SCREEN_ON)) {
-                        try {
-                            //The screen on position
-                            DisplayMetrics metrics = new DisplayMetrics();
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                                Display display = context.getDisplay();
-                                if (display == null) {
-                                    Log.e("WallpaperSwitcher", "Could could not get display");
-                                    return;
-                                }
-                                display.getRealMetrics(metrics);
-                            } else {
-                                metrics = context.getResources().getDisplayMetrics();
-                            }
-
-                            if (metrics.widthPixels == 0 || metrics.heightPixels == 0) return;
-                            double aspect = (double) metrics.widthPixels / metrics.heightPixels;
-                            ICacheManager cache = CacheInstanceManager.instanceForCanvas(aspect);
-                            if (cache == null || cache.needsInitialized()) return;
-                            cache.switchWallpaper(context);
-                        } catch (Exception e)
-                        {
-                            Log.e("WallpaperSwitcher", e.toString());
+                    if (!intent.getAction().equals(Intent.ACTION_USER_PRESENT) && !intent.getAction().equals(Intent.ACTION_SCREEN_ON)) return;
+                    try {
+                        //The screen on position
+                        DisplayMetrics metrics = WallpaperSwitcher.getDisplayMetrics(context);
+                        if (metrics == null) {
+                            Log.e("WallpaperSwitcher", "Could could not get display");
+                            return;
                         }
+
+                        double aspect = (double) metrics.widthPixels / metrics.heightPixels;
+                        ICacheManager cache = CacheInstanceManager.instanceForCanvas(aspect);
+                        if (cache == null || cache.needsInitialized()) {
+                            Log.e("WallpaperSwitcher", String.format("Could not get cache for active display: %dx%d, aspect: %.3f", metrics.widthPixels, metrics.heightPixels, aspect));
+                            return;
+                        }
+
+                        cache.switchWallpaper(context);
+                    } catch (Exception e) {
+                        Log.e("WallpaperSwitcher", e.toString());
                     }
                 }
             };
             IntentFilter screenStateFilter = new IntentFilter();
             screenStateFilter.addAction(Intent.ACTION_SCREEN_ON);
+            screenStateFilter.addAction(Intent.ACTION_USER_PRESENT);
             registerReceiver(screenEventReceiver, screenStateFilter);
 
             String directorySetting = sp.getString("directories", null);
@@ -107,7 +105,7 @@ public class WallpaperSwitcher extends WallpaperService {
             if (holder == null) holder = getSurfaceHolder();
             if (!holder.getSurface().isValid()) return;
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                holder.getSurface().setFrameRate(0, Surface.FRAME_RATE_COMPATIBILITY_FIXED_SOURCE);
+                holder.getSurface().setFrameRate(0, Surface.FRAME_RATE_COMPATIBILITY_DEFAULT);
             }
 
             Canvas c = null;
@@ -219,4 +217,26 @@ public class WallpaperSwitcher extends WallpaperService {
         }
     }
 
+    @Nullable
+    public static DisplayMetrics getDisplayMetrics(Context context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return getDisplayMetricsFallback(context);
+
+        Display display = context.getDisplay();
+        if (display != null) {
+            DisplayMetrics metrics = new DisplayMetrics();
+            // deprecated because of multi-window, but we want the full display for a live wallpaper
+            display.getRealMetrics(metrics);
+            if (metrics.widthPixels != 0 && metrics.heightPixels != 0) return metrics;
+            return getDisplayMetricsFallback(context);
+        }
+
+        return getDisplayMetricsFallback(context);
+    }
+
+    @Nullable
+    private static DisplayMetrics getDisplayMetricsFallback(Context context) {
+        DisplayMetrics metrics = context.getResources().getDisplayMetrics();
+        if (metrics.widthPixels == 0 || metrics.heightPixels == 0) return null;
+        return metrics;
+    }
 }

@@ -98,4 +98,18 @@
         <!--<categories android:name="android.shortcut.conversation" />
         <capability-binding android:key="actions.intent.CREATE_MESSAGE" />-->
     </shortcut>
+    <shortcut
+        android:shortcutId="view_history"
+        android:enabled="true"
+        android:icon="@drawable/image"
+        android:shortcutShortLabel="@string/shortcut_view_history"
+        android:shortcutLongLabel="@string/shortcut_view_history"
+        android:shortcutDisabledMessage="@string/shortcut_disabled">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetPackage="com.da3dsoul.WallpaperSwitcher"
+            android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.ViewHistoryActivity" />
+        <!--<categories android:name="android.shortcut.conversation" />
+        <capability-binding android:key="actions.intent.CREATE_MESSAGE" />-->
+    </shortcut>
 </shortcuts>

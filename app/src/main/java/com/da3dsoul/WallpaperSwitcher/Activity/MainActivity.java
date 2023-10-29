@@ -38,10 +38,13 @@ public class MainActivity extends Activity {
             matches.add(new Object[]{ "Open Current Wallpaper on da3dsoul.dev", OpenCurrentWallpaperOnDa3dsoulActivity.class });
             matches.add(new Object[]{ "Open Current Wallpaper on Pixiv", OpenCurrentWallpaperOnPixivActivity.class });
             matches.add(new Object[]{ "Open Previous Wallpaper", OpenPreviousWallpaperActivity.class });
+            matches.add(new Object[]{ "View History", ViewHistoryActivity.class });
 
             recyclerView.setAdapter(new MainActivityListRecyclerViewAdapter(matches));
         } catch (Exception e) {
             Log.e("WallpaperSwitcher.main", e.toString());
         }
     }
+
+
 }

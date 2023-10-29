@@ -10,6 +10,7 @@ import android.util.Log;
 
 import com.da3dsoul.WallpaperSwitcher.CacheInstanceManager;
 import com.da3dsoul.WallpaperSwitcher.ICacheManager;
+import com.da3dsoul.WallpaperSwitcher.WallpaperSwitcher;
 
 import java.io.File;
 
@@ -19,12 +20,9 @@ public class OpenCurrentWallpaperActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        DisplayMetrics metrics = new DisplayMetrics();
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            getDisplay().getRealMetrics(metrics);
-        }
+        DisplayMetrics metrics = WallpaperSwitcher.getDisplayMetrics(this);
 
-        if (metrics.widthPixels == 0 || metrics.heightPixels == 0) {
+        if (metrics == null) {
             finish();
             return;
         }

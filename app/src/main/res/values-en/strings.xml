@@ -27,4 +27,5 @@
     <string name="shortcut_open_current_da3dsoul">Open Current Wallpaper on da3dsoul.dev</string>
     <string name="shortcut_open_current_pixiv">Open Current Wallpaper on Pixiv</string>
     <string name="shortcut_open_previous">Open Previous Wallpaper</string>
+    <string name="shortcut_view_history">View History</string>
 </resources>
