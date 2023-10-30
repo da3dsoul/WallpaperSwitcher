@@ -43,36 +43,8 @@ public class WallpaperSwitcher extends WallpaperService {
             sp = WallpaperSwitcher.this.getSharedPreferences("wall", MODE_PRIVATE);
             sp.registerOnSharedPreferenceChangeListener(this);
 
-            screenEventReceiver = new BroadcastReceiver() {
-                @Override
-                public void onReceive(Context context, Intent intent) {
-                    if (intent.getAction() == null) return;
-                    if (!intent.getAction().equals(Intent.ACTION_USER_PRESENT) && !intent.getAction().equals(Intent.ACTION_SCREEN_ON)) return;
-                    try {
-                        //The screen on position
-                        DisplayMetrics metrics = WallpaperSwitcher.getDisplayMetrics(context);
-                        if (metrics == null) {
-                            Log.e("WallpaperSwitcher", "Could could not get display");
-                            return;
-                        }
-
-                        double aspect = (double) metrics.widthPixels / metrics.heightPixels;
-                        ICacheManager cache = CacheInstanceManager.instanceForCanvas(aspect);
-                        if (cache == null || cache.needsInitialized()) {
-                            Log.e("WallpaperSwitcher", String.format("Could not get cache for active display: %dx%d, aspect: %.3f", metrics.widthPixels, metrics.heightPixels, aspect));
-                            return;
-                        }
-
-                        cache.switchWallpaper(context);
-                    } catch (Exception e) {
-                        Log.e("WallpaperSwitcher", e.toString());
-                    }
-                }
-            };
-            IntentFilter screenStateFilter = new IntentFilter();
-            screenStateFilter.addAction(Intent.ACTION_SCREEN_ON);
-            screenStateFilter.addAction(Intent.ACTION_USER_PRESENT);
-            registerReceiver(screenEventReceiver, screenStateFilter);
+            screenEventReceiver = new ScreenEventReceiver();
+            registerReceiver(screenEventReceiver, new IntentFilter(Intent.ACTION_USER_PRESENT));
 
             String directorySetting = sp.getString("directories", null);
             if (directorySetting == null || directorySetting.equals("")) return;
@@ -221,13 +193,18 @@ public class WallpaperSwitcher extends WallpaperService {
     public static DisplayMetrics getDisplayMetrics(Context context) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return getDisplayMetricsFallback(context);
 
-        Display display = context.getDisplay();
-        if (display != null) {
-            DisplayMetrics metrics = new DisplayMetrics();
-            // deprecated because of multi-window, but we want the full display for a live wallpaper
-            display.getRealMetrics(metrics);
-            if (metrics.widthPixels != 0 && metrics.heightPixels != 0) return metrics;
-            return getDisplayMetricsFallback(context);
+        try {
+            Display display = context.getDisplay();
+            if (display != null) {
+                DisplayMetrics metrics = new DisplayMetrics();
+                // deprecated because of multi-window, but we want the full display for a live wallpaper
+                display.getRealMetrics(metrics);
+                if (metrics.widthPixels != 0 && metrics.heightPixels != 0) return metrics;
+                return getDisplayMetricsFallback(context);
+            }
+        } catch (UnsupportedOperationException e)
+        {
+            Log.e("WallpaperSwitcher", "Unable to get Display: " + e);
         }
 
         return getDisplayMetricsFallback(context);
