@@ -9,6 +9,7 @@
         android:shortcutDisabledMessage="@string/shortcut_disabled">
         <intent
             android:action="android.intent.action.VIEW"
+            android:excludeFromRecents="true"
             android:targetPackage="com.da3dsoul.WallpaperSwitcher"
             android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.SettingsActivity" />
         <!--<categories android:name="android.shortcut.conversation" />
@@ -23,6 +24,7 @@
         android:shortcutDisabledMessage="@string/shortcut_disabled">
         <intent
             android:action="android.intent.action.VIEW"
+            android:excludeFromRecents="true"
             android:targetPackage="com.da3dsoul.WallpaperSwitcher"
             android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.SwitchWallpaperActivity" />
         <!--<categories android:name="android.shortcut.conversation" />
@@ -37,6 +39,7 @@
         android:shortcutDisabledMessage="@string/shortcut_disabled">
         <intent
             android:action="android.intent.action.VIEW"
+            android:excludeFromRecents="true"
             android:targetPackage="com.da3dsoul.WallpaperSwitcher"
             android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.ShareWallpaperActivity" />
         <!--<categories android:name="android.shortcut.conversation" />
@@ -51,6 +54,7 @@
         android:shortcutDisabledMessage="@string/shortcut_disabled">
         <intent
             android:action="android.intent.action.VIEW"
+            android:excludeFromRecents="true"
             android:targetPackage="com.da3dsoul.WallpaperSwitcher"
             android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.OpenCurrentWallpaperActivity" />
         <!--<categories android:name="android.shortcut.conversation" />
@@ -65,6 +69,7 @@
         android:shortcutDisabledMessage="@string/shortcut_disabled">
         <intent
             android:action="android.intent.action.VIEW"
+            android:excludeFromRecents="true"
             android:targetPackage="com.da3dsoul.WallpaperSwitcher"
             android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.OpenCurrentWallpaperOnDa3dsoulActivity" />
         <!--<categories android:name="android.shortcut.conversation" />
@@ -79,6 +84,7 @@
         android:shortcutDisabledMessage="@string/shortcut_disabled">
         <intent
             android:action="android.intent.action.VIEW"
+            android:excludeFromRecents="true"
             android:targetPackage="com.da3dsoul.WallpaperSwitcher"
             android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.OpenCurrentWallpaperOnPixivActivity" />
         <!--<categories android:name="android.shortcut.conversation" />
@@ -93,6 +99,7 @@
         android:shortcutDisabledMessage="@string/shortcut_disabled">
         <intent
             android:action="android.intent.action.VIEW"
+            android:excludeFromRecents="true"
             android:targetPackage="com.da3dsoul.WallpaperSwitcher"
             android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.OpenPreviousWallpaperActivity" />
         <!--<categories android:name="android.shortcut.conversation" />
@@ -107,6 +114,7 @@
         android:shortcutDisabledMessage="@string/shortcut_disabled">
         <intent
             android:action="android.intent.action.VIEW"
+            android:excludeFromRecents="true"
             android:targetPackage="com.da3dsoul.WallpaperSwitcher"
             android:targetClass="com.da3dsoul.WallpaperSwitcher.Activity.ViewHistoryActivity" />
         <!--<categories android:name="android.shortcut.conversation" />

@@ -20,7 +20,10 @@
         tools:targetApi="31"
         android:theme="@style/Theme.MaterialComponents.DayNight"
         android:dataExtractionRules="@xml/data_extraction_rules">
-        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.MainActivity" android:exported="true" android:theme="@style/Theme.Transparent">
+        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Transparent"
+            android:excludeFromRecents="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -29,38 +32,41 @@
             <meta-data android:name="android.app.shortcuts"
                 android:resource="@xml/shortcuts" />
         </activity>
-        <activity
-            android:name="com.da3dsoul.WallpaperSwitcher.Activity.SettingsActivity"
+        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.SettingsActivity"
             android:label="@string/title_activity_settings" android:exported="true"
-            android:theme="@style/Theme.AppCompat.DayNight" />
-        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.AddDirectoryActivity" android:exported="false" />
-        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.SelectDirActivity" android:exported="false" />
-        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.ViewHistoryActivity" android:exported="true" android:theme="@style/Theme.Transparent" />
-        <activity
-            android:name="com.da3dsoul.WallpaperSwitcher.Activity.ShareWallpaperActivity"
+            android:theme="@style/Theme.AppCompat.DayNight"
+            android:excludeFromRecents="true" />
+        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.AddDirectoryActivity" android:exported="false" android:excludeFromRecents="true" />
+        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.SelectDirActivity"
+            android:exported="false"
+            android:excludeFromRecents="true" />
+        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.ViewHistoryActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
-        </activity>
-        <activity
-            android:name="com.da3dsoul.WallpaperSwitcher.Activity.SwitchWallpaperActivity"
+            android:theme="@style/Theme.Transparent"
+            android:excludeFromRecents="true" />
+        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.ShareWallpaperActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity
-            android:name="com.da3dsoul.WallpaperSwitcher.Activity.OpenCurrentWallpaperActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true"/>
+        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.SwitchWallpaperActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity
-            android:name="com.da3dsoul.WallpaperSwitcher.Activity.OpenPreviousWallpaperActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true" />
+        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.OpenCurrentWallpaperActivity"
             android:exported="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity
-            android:name="com.da3dsoul.WallpaperSwitcher.Activity.OpenCurrentWallpaperOnPixivActivity"
-            android:exported="true"
-            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
-        <activity
-            android:name="com.da3dsoul.WallpaperSwitcher.Activity.OpenCurrentWallpaperOnDa3dsoulActivity"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true" />
+        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.OpenPreviousWallpaperActivity"
             android:exported="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.OpenCurrentWallpaperOnPixivActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true" />
+        <activity android:name="com.da3dsoul.WallpaperSwitcher.Activity.OpenCurrentWallpaperOnDa3dsoulActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar"
+            android:excludeFromRecents="true" />
 
         <service
             android:name="com.da3dsoul.WallpaperSwitcher.WallpaperSwitcher"

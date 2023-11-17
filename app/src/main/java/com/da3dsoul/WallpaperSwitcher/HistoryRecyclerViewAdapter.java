@@ -48,6 +48,7 @@ public class HistoryRecyclerViewAdapter extends RecyclerView.Adapter<HistoryRecy
             Intent openIntent = new Intent(Intent.ACTION_VIEW);
             openIntent.setDataAndType(Uri.parse(holder.uri), "image/*");
             openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            openIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
             v.getContext().startActivity(openIntent);
             Activity a = getActivity(v.getContext());
             if (a != null) a.finish();

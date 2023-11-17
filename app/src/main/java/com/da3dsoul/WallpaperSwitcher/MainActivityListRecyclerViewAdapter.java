@@ -44,6 +44,7 @@ public class MainActivityListRecyclerViewAdapter extends RecyclerView.Adapter<Ma
         holder.mView.setOnClickListener(v -> {
             Intent openIntent = new Intent(v.getContext(), holder.classToOpen);
             openIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            openIntent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
             v.getContext().startActivity(openIntent);
             Activity a = getActivity(v.getContext());
             if (a != null) a.finish();
